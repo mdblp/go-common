@@ -167,7 +167,7 @@ func (b *ShorelineClientBuilder) Build() *ShorelineClient {
 // that requires a server token
 func (client *ShorelineClient) Start() error {
 	attempts := 0
-	var err : error 
+	var err error 
 	for attempts < 5 {
 		if err = client.serverLogin(); err != nil {
 			log.Printf("Problem with initial server token acquisition, [%v]", err)
