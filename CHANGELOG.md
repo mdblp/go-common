@@ -2,7 +2,7 @@
 
 Go-Common is the library of common functions for Tidepool's Go-based applications
 
-## 0.2.0 - Unreleased
+## 0.2.0 - 2019-10-09
 ### Added
 - [PT-582] Merge from upstream Tidepool v0.4.1
 
