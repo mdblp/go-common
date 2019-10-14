@@ -23,21 +23,18 @@ func NewStatus(statusCode int, reason string) Status {
 }
 
 func NewStatusWithError(statusCode int, errorCode int, reason string) Status {
-	s := Status{Code: statusCode, Error: &errorCode, Reason: reason}
-	if s.Reason == "" {
-		s.Reason = http.StatusText(statusCode)
-	}
+	s := NewStatus(statusCode, reason)
+	s.Error = &errorCode
 	return s
 }
 
-// NewStatus constructs a Status object; if no reason is provided, it uses the
-// standard one.
+// NewStatusf constructs a Status object with a formated reason (using Sprintf)
 func NewStatusf(statusCode int, reason string, args ...interface{}) Status {
-	return Status{Code: statusCode, Reason: fmt.Sprintf(reason, args...)}
+	return NewStatus(statusCode, fmt.Sprintf(reason, args...))
 }
 
 func StatusFromResponse(res *http.Response) Status {
-	return Status{Code: res.StatusCode, Reason: res.Status}
+	return NewStatus(res.StatusCode, res.Status)
 }
 
 // String() converts a status to a printable string.
