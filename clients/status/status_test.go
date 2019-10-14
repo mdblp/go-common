@@ -3,6 +3,8 @@ package status
 import (
 	"net/http"
 	"testing"
+
+	"github.com/tidepool-org/go-common/clients/version"
 )
 
 func TestNewStatus(t *testing.T) {
@@ -12,6 +14,23 @@ func TestNewStatus(t *testing.T) {
 	}
 	if s.Reason != "OK" {
 		t.Error("Expected status reason to be 'OK'")
+	}
+}
+
+func TestVersionDisplay(t *testing.T) {
+	//set the application version
+	version.VersionBase = "1.0.1"
+	version.VersionFullCommit = "5fa7cdd19bd6eb8c9082c5f456f806d4cfd0f438"
+	expectedVersion := "1.0.1+5fa7cdd19bd6eb8c9082c5f456f806d4cfd0f438"
+	s := NewStatus(200, "OK")
+	if s.Code != 200 {
+		t.Error("Expected status code to be 200")
+	}
+	if s.Reason != "OK" {
+		t.Error("Expected status reason to be 'OK'")
+	}
+	if s.Version != expectedVersion {
+		t.Errorf("Expected the version to be %s but got %s", expectedVersion, s.Version)
 	}
 }
 

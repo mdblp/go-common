@@ -3,19 +3,22 @@ package status
 import (
 	"fmt"
 	"net/http"
+
+	"github.com/tidepool-org/go-common/clients/version"
 )
 
 // Type status holds the status return from an http request.
 type Status struct {
-	Code   int    `json:"code"`
-	Error  *int   `json:"error,omitempty"`
-	Reason string `json:"reason"`
+	Code    int    `json:"code"`
+	Error   *int   `json:"error,omitempty"`
+	Reason  string `json:"reason"`
+	Version string `json:"version"`
 }
 
 // NewStatus constructs a Status object; if no reason is provided, it uses the
 // standard one.
 func NewStatus(statusCode int, reason string) Status {
-	s := Status{Code: statusCode, Reason: reason}
+	s := Status{Code: statusCode, Reason: reason, Version: version.Long()}
 	if s.Reason == "" {
 		s.Reason = http.StatusText(statusCode)
 	}
