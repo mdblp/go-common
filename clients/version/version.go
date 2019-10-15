@@ -2,10 +2,10 @@ package version
 
 import (
 	"fmt"
+	"sync"
 )
 
 type version struct {
-	initialized bool
 	base        string
 	shortCommit string
 	fullCommit  string
@@ -46,23 +46,20 @@ func (v version) String() string {
 
 // Singleton version instance
 var instance version
+var once sync.Once
 
 // Variables to be injected at build time
 var (
-	releaseNumber string //Release number. i.e. 1.2.3
-	shortCommit   string
-	fullCommit    string //Full commit id. i.e. e0c73b95646559e9a3696d41711e918398d557fb
+	ReleaseNumber string //Release number. i.e. 1.2.3
+	ShortCommit   string
+	FullCommit    string //Full commit id. i.e. e0c73b95646559e9a3696d41711e918398d557fb
 )
 
-func init() {
-	if !instance.initialized {
-		instance = version{base: releaseNumber, fullCommit: fullCommit, shortCommit: shortCommit, initialized: true}
-	}
-}
-
-// Initialization function, only used for tests
-func forceInit() {
-	instance = version{base: releaseNumber, fullCommit: fullCommit, shortCommit: shortCommit, initialized: true}
+func GetVersion() version {
+	once.Do(func() {
+		instance = version{base: ReleaseNumber, fullCommit: FullCommit, shortCommit: ShortCommit}
+	})
+	return instance
 }
 
 func Long() string {
