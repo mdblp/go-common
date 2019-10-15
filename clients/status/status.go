@@ -55,7 +55,7 @@ func (s *StatusError) Error() string {
 }
 
 type ApiStatus struct {
-	Status  Status `json:status`
+	Status  Status `json:"status"`
 	Version string `json:"version"`
 }
 
