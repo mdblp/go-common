@@ -9,16 +9,15 @@ import (
 
 // Type status holds the status return from an http request.
 type Status struct {
-	Code    int    `json:"code"`
-	Error   *int   `json:"error,omitempty"`
-	Reason  string `json:"reason"`
-	Version string `json:"version"`
+	Code   int    `json:"code"`
+	Error  *int   `json:"error,omitempty"`
+	Reason string `json:"reason"`
 }
 
 // NewStatus constructs a Status object; if no reason is provided, it uses the
 // standard one.
 func NewStatus(statusCode int, reason string) Status {
-	s := Status{Code: statusCode, Reason: reason, Version: version.Long()}
+	s := Status{Code: statusCode, Reason: reason}
 	if s.Reason == "" {
 		s.Reason = http.StatusText(statusCode)
 	}
@@ -53,4 +52,17 @@ type StatusError struct {
 // Error() renders a StatusError.
 func (s *StatusError) Error() string {
 	return s.Status.String()
+}
+
+type ApiStatus struct {
+	Status  Status `json:status`
+	Version string `json:"version"`
+}
+
+func NewApiStatus(statusCode int, reason string) ApiStatus {
+	s := ApiStatus{
+		Status:  NewStatus(statusCode, reason),
+		Version: version.GetVersion().String(),
+	}
+	return s
 }
