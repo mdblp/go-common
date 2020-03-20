@@ -102,6 +102,10 @@ func (b *HighwaterClientBuilder) Build() *HighwaterClient {
 		b.httpClient = http.DefaultClient
 	}
 
+	if b.config.SkipHighwater {
+		log.Printf("Highwater client is configured to skip actually sending metrics to Highwater")
+	}
+
 	return &HighwaterClient{
 		hostGetter: b.hostGetter,
 		httpClient: b.httpClient,
@@ -142,7 +146,6 @@ func (client *HighwaterClient) PostServer(eventName, token string, params map[st
 
 	// if Highwater is skipped per configuration nothing is sent to the service
 	if client.config.SkipHighwater {
-		log.Printf("Highwater is skipped: no event is sent")
 		return
 	}
 
@@ -172,7 +175,6 @@ func (client *HighwaterClient) PostThisUser(eventName, token string, params map[
 
 	// if Highwater is skipped per configuration nothing is sent to the service
 	if client.config.SkipHighwater {
-		log.Printf("Highwater is skipped: no event is sent")
 		return
 	}
 
@@ -202,7 +204,6 @@ func (client *HighwaterClient) PostWithUser(userId, eventName, token string, par
 
 	// if Highwater is skipped per configuration nothing is sent to the service
 	if client.config.SkipHighwater {
-		log.Printf("Highwater is skipped: no event is sent")
 		return
 	}
 
