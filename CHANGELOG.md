@@ -2,6 +2,10 @@
 
 Go-Common is the library of common functions for Tidepool's Go-based applications
 
+## 0.4.0 - 2019-10-17
+### Changed
+- PT-1201 Add new configuration item “skipHighwater”
+
 ## 0.3.0 - 2019-10-17
 ### Changed
 - [PT-727] Add the versioning info in the status object
