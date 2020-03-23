@@ -35,6 +35,7 @@ type HighwaterClientConfig struct {
 	Name           string `json:"name"` // The name of this server for use in obtaining a server token
 	MetricsSource  string `json:"metricsSource"`
 	MetricsVersion string `json:"metricsVersion"`
+	SkipHighwater  bool   `json:"skipHighwater"`
 }
 
 func NewHighwaterClientBuilder() *HighwaterClientBuilder {
@@ -68,27 +69,41 @@ func (b *HighwaterClientBuilder) WithVersion(val string) *HighwaterClientBuilder
 	return b
 }
 
+func (b *HighwaterClientBuilder) WithSkip(val bool) *HighwaterClientBuilder {
+	b.config.SkipHighwater = val
+	return b
+}
+
 func (b *HighwaterClientBuilder) WithConfig(val *HighwaterClientConfig) *HighwaterClientBuilder {
-	return b.WithName(val.Name).WithSource(val.MetricsSource).WithVersion(val.MetricsVersion)
+	return b.WithName(val.Name).WithSource(val.MetricsSource).WithVersion(val.MetricsVersion).
+		WithSkip(val.SkipHighwater)
 }
 
 func (b *HighwaterClientBuilder) Build() *HighwaterClient {
+
 	if b.hostGetter == nil {
 		panic("HighwaterClient requires a hostGetter to be set")
 	}
-	if b.config.Name == "" {
-		panic("HighwaterClient requires a name to be set")
-	}
-	if b.config.MetricsSource == "" {
-		panic("HighwaterClient requires a source to be set")
-	}
 
-	if b.config.MetricsVersion == "" {
-		panic("HighwaterClient requires a version to be set")
+	// in case Highwater is skipped these information are not needed
+	if !b.config.SkipHighwater {
+		if b.config.Name == "" {
+			panic("HighwaterClient requires a name to be set")
+		}
+		if b.config.MetricsSource == "" {
+			panic("HighwaterClient requires a source to be set")
+		}
+		if b.config.MetricsVersion == "" {
+			panic("HighwaterClient requires a version to be set")
+		}
 	}
 
 	if b.httpClient == nil {
 		b.httpClient = http.DefaultClient
+	}
+
+	if b.config.SkipHighwater {
+		log.Printf("Highwater client is configured to skip actually sending metrics to Highwater")
 	}
 
 	return &HighwaterClient{
@@ -129,6 +144,11 @@ func (client *HighwaterClient) adjustEventParams(params map[string]string) []byt
 
 func (client *HighwaterClient) PostServer(eventName, token string, params map[string]string) {
 
+	// if Highwater is skipped per configuration nothing is sent to the service
+	if client.config.SkipHighwater {
+		return
+	}
+
 	host := client.getHost()
 	if host == nil {
 		log.Println("No known highwater hosts.")
@@ -152,6 +172,12 @@ func (client *HighwaterClient) PostServer(eventName, token string, params map[st
 }
 
 func (client *HighwaterClient) PostThisUser(eventName, token string, params map[string]string) {
+
+	// if Highwater is skipped per configuration nothing is sent to the service
+	if client.config.SkipHighwater {
+		return
+	}
+
 	host := client.getHost()
 	if host == nil {
 		log.Println("No known highwater hosts.")
@@ -175,6 +201,12 @@ func (client *HighwaterClient) PostThisUser(eventName, token string, params map[
 }
 
 func (client *HighwaterClient) PostWithUser(userId, eventName, token string, params map[string]string) {
+
+	// if Highwater is skipped per configuration nothing is sent to the service
+	if client.config.SkipHighwater {
+		return
+	}
+
 	host := client.getHost()
 	if host == nil {
 		log.Println("No known highwater hosts.")
