@@ -2,6 +2,10 @@
 
 Go-Common is the library of common functions for Tidepool's Go-based applications
 
+## 0.5.0 - 2020-04-14
+### Added
+- Complete Getekeeper client with missing route
+
 ## 0.4.0 - 2019-10-17
 ### Changed
 - PT-1201 Add new configuration item “skipHighwater”

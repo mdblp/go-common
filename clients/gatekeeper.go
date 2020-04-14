@@ -27,6 +27,9 @@ type (
 		// returns the map of user id to Permissions
 		UsersInGroup(groupID string) (UsersPermissions, error)
 
+		// returns the map of user id to Permissions
+		GroupsForUser(userID string) (UsersPermissions, error)
+
 		//userID  -- the Tidepool-assigned userID
 		//groupID  -- the Tidepool-assigned groupID
 		//permissions -- the permisson we want to give the user for the group
@@ -92,6 +95,10 @@ func (b *gatekeeperClientBuilder) Build() *gatekeeperClient {
 	}
 }
 
+// UserInGroup Check whether one subject is sharing data with one other user
+// original route /access/{userid}/{granteeid}
+// userID ID of the user to check for having permissions to view subject's data
+// groupID ID of the user subject
 func (client *gatekeeperClient) UserInGroup(userID, groupID string) (Permissions, error) {
 	host := client.getHost()
 	if host == nil {
@@ -122,6 +129,9 @@ func (client *gatekeeperClient) UserInGroup(userID, groupID string) (Permissions
 	}
 }
 
+// UsersInGroup List of users one subject is sharing data with
+// original route /access/{userid}
+// groupID ID of the user subject
 func (client *gatekeeperClient) UsersInGroup(groupID string) (UsersPermissions, error) {
 	host := client.getHost()
 	if host == nil {
@@ -143,6 +153,39 @@ func (client *gatekeeperClient) UsersInGroup(groupID string) (UsersPermissions, 
 		if err := json.NewDecoder(res.Body).Decode(&retVal); err != nil {
 			log.Println(err)
 			return nil, &status.StatusError{status.NewStatus(500, "UserInGroup Unable to parse response.")}
+		}
+		return retVal, nil
+	} else if res.StatusCode == 404 {
+		return nil, nil
+	} else {
+		return nil, &status.StatusError{status.NewStatusf(res.StatusCode, "Unknown response code from service[%s]", req.URL)}
+	}
+}
+
+// GroupsForUser returns the list of users sharing data with one subject
+// original route /access/groups/{userid}
+// userID ID of the user subject
+func (client *gatekeeperClient) GroupsForUser(userID string) (UsersPermissions, error) {
+	host := client.getHost()
+	if host == nil {
+		return nil, errors.New("No known gatekeeper hosts")
+	}
+	host.Path = path.Join(host.Path, "access", "groups", userID)
+
+	req, _ := http.NewRequest("GET", host.String(), nil)
+	req.Header.Add("x-tidepool-session-token", client.tokenProvider.TokenProvide())
+
+	res, err := client.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode == 200 {
+		retVal := make(UsersPermissions)
+		if err := json.NewDecoder(res.Body).Decode(&retVal); err != nil {
+			log.Println(err)
+			return nil, &status.StatusError{status.NewStatus(500, "GroupsForUser Unable to parse response.")}
 		}
 		return retVal, nil
 	} else if res.StatusCode == 404 {
