@@ -10,7 +10,7 @@ import (
 const USERID, GROUPID, TOKEN_MOCK = "123user", "456group", "this is a token"
 
 func makeExpectedPermissons() Permissions {
-	return Permissions{USERID: Allowed}
+	return Permissions{"root": Allowed}
 }
 
 func makeExpectedUsersPermissions() UsersPermissions {

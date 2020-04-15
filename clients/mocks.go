@@ -51,7 +51,7 @@ func (mock *GatekeeperMock) GroupsForUser(userID string) (UsersPermissions, erro
 }
 
 func (mock *GatekeeperMock) SetPermissions(userID, groupID string, permissions Permissions) (Permissions, error) {
-	return Permissions{userID: Allowed}, nil
+	return Permissions{"root": Allowed}, nil
 }
 
 //A mock of the Seagull interface
