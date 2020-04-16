@@ -40,9 +40,10 @@ func (mock *GatekeeperMock) GroupsForUser(userID string) (UsersPermissions, erro
 	if mock.expectedPermissions != nil || mock.expectedError != nil {
 		if len(mock.UserIDs) > 0 {
 			perms := make(map[string]Permissions)
-			for _, userID := range mock.UserIDs {
-				perms[userID] = mock.expectedPermissions
+			for _, user := range mock.UserIDs {
+				perms[user] = mock.expectedPermissions
 			}
+			perms[userID] = Permissions{"root": Allowed}
 			return perms, mock.expectedError
 		}
 		return UsersPermissions{userID: mock.expectedPermissions}, mock.expectedError

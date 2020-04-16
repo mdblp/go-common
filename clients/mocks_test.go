@@ -78,6 +78,7 @@ func TestGatekeeperMock_GroupsForUser(t *testing.T) {
 	for _, user := range gkc.UserIDs {
 		expectedPerms[user] = mockedPerms
 	}
+	expectedPerms[GROUPID] = Permissions{"root": Allowed}
 	if userPerms, err := gkc.GroupsForUser(GROUPID); err != nil {
 		t.Fatal("No error should be returned")
 	} else if !reflect.DeepEqual(userPerms, expectedPerms) {
