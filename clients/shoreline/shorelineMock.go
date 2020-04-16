@@ -5,11 +5,19 @@ import (
 )
 
 type ShorelineMockClient struct {
-	ServerToken string
+	ServerToken  string
+	Unauthorized bool
+	UserID       string
+	IsServer     bool
 }
 
 func NewMock(token string) *ShorelineMockClient {
-	return &ShorelineMockClient{ServerToken: token}
+	return &ShorelineMockClient{
+		ServerToken:  token,
+		Unauthorized: false,
+		UserID:       "123.456.789",
+		IsServer:     true,
+	}
 }
 
 func (client *ShorelineMockClient) Start() error {
@@ -22,15 +30,18 @@ func (client *ShorelineMockClient) Close() {
 }
 
 func (client *ShorelineMockClient) Login(username, password string) (*UserData, string, error) {
-	return &UserData{UserID: "123.456.789", Username: username, Emails: []string{username}}, client.ServerToken, nil
+	return &UserData{UserID: client.UserID, Username: username, Emails: []string{username}}, client.ServerToken, nil
 }
 
 func (client *ShorelineMockClient) Signup(username, password, email string) (*UserData, error) {
-	return &UserData{UserID: "123.xxx.456", Username: username, Emails: []string{email}}, nil
+	return &UserData{UserID: client.UserID, Username: username, Emails: []string{email}}, nil
 }
 
 func (client *ShorelineMockClient) CheckToken(token string) *TokenData {
-	return &TokenData{UserID: "987.654.321", IsServer: true}
+	if client.Unauthorized {
+		return nil
+	}
+	return &TokenData{UserID: client.UserID, IsServer: client.IsServer}
 }
 
 func (client *ShorelineMockClient) TokenProvide() string {

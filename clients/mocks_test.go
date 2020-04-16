@@ -1,6 +1,7 @@
 package clients
 
 import (
+	"errors"
 	"reflect"
 	"testing"
 )
@@ -10,7 +11,7 @@ import (
 const USERID, GROUPID, TOKEN_MOCK = "123user", "456group", "this is a token"
 
 func makeExpectedPermissons() Permissions {
-	return Permissions{USERID: Allowed}
+	return Permissions{"root": Allowed}
 }
 
 func makeExpectedUsersPermissions() UsersPermissions {
@@ -43,6 +44,48 @@ func TestGatekeeperMock_UsersInGroup(t *testing.T) {
 	}
 }
 
+func TestGatekeeperMock_GroupsForUser(t *testing.T) {
+	expected := makeExpectedUsersPermissions()
+
+	gkc := NewGatekeeperMock(nil, nil)
+	if perms, err := gkc.GroupsForUser(GROUPID); err != nil {
+		t.Fatal("No error should be returned")
+	} else if !reflect.DeepEqual(perms, expected) {
+		t.Fatalf("Perms were [%v] but expected [%v]", perms, expected)
+	}
+
+	// testing with error
+	gkc.SetExpected(nil, errors.New("gk error"))
+	if _, err := gkc.GroupsForUser(GROUPID); err == nil {
+		t.Fatal("An error should be returned")
+	}
+
+	// testing with permisson set
+	mockedPerms := Permissions{"view": Allowed, "root": Allowed}
+	gkc.SetExpected(mockedPerms, nil)
+	expectedPerms := UsersPermissions{}
+	expectedPerms[GROUPID] = mockedPerms
+	if perms, err := gkc.GroupsForUser(GROUPID); err != nil {
+		t.Fatal("No error should be returned")
+	} else if !reflect.DeepEqual(perms, expectedPerms) {
+		t.Fatalf("Perms were [%v] but expected [%v]", perms, expectedPerms)
+	}
+
+	//testing with UserIds
+	gkc.SetExpected(mockedPerms, nil)
+	gkc.UserIDs = []string{"user1", "user2"}
+	expectedPerms = UsersPermissions{}
+	for _, user := range gkc.UserIDs {
+		expectedPerms[user] = mockedPerms
+	}
+	expectedPerms[GROUPID] = Permissions{"root": Allowed}
+	if userPerms, err := gkc.GroupsForUser(GROUPID); err != nil {
+		t.Fatal("No error should be returned")
+	} else if !reflect.DeepEqual(userPerms, expectedPerms) {
+		t.Fatalf("Perms were [%v] but expected [%v]", userPerms, expectedPerms)
+	}
+
+}
 func TestGatekeeperMock_SetPermissions(t *testing.T) {
 
 	gkc := NewGatekeeperMock(nil, nil)
