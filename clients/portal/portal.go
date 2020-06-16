@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"path"
@@ -115,7 +114,6 @@ func (client *Client) GetPatientConfig(token string) (*PatientConfig, error) {
 
 	var pc PatientConfig
 	if err = json.NewDecoder(res.Body).Decode(&pc); err != nil {
-		log.Println("Error parsing JSON results", err)
 		return nil, fmt.Errorf("Error parsing JSON results: %v", err)
 	}
 
