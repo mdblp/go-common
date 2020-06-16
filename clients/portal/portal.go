@@ -13,14 +13,6 @@ import (
 	"github.com/tidepool-org/go-common/clients/disc"
 )
 
-// // Client The interface to portal-api.
-// //
-// // Will be implemented in the mock
-// type Client interface {
-// 	GetPatientConfig(token string)
-// 	// GetPatientConfigForMember(token string, userID string)
-// }
-
 // Client The interface to portal-api.
 type Client struct {
 	config     *ClientConfig
