@@ -9,7 +9,7 @@ type PatientConfig struct {
 	ID             *string                  `json:"_id,omitempty"`
 	Time           *string                  `json:"time,omitempty"`
 	Timezone       *string                  `json:"timezone,omitempty"`
-	TimezoneOffset *string                  `json:"timezoneOffset,omitempty"`
+	TimezoneOffset *int                     `json:"timezoneOffset,omitempty"`
 	Device         *PatientConfigDevice     `json:"device,omitempty"`
 	Parameters     *PatientConfigParameters `json:"parameters,omitempty"`
 	CGM            *PatientCGMInfo          `json:"cgm,omitempty"`
@@ -48,7 +48,7 @@ type PatientParameter struct {
 	// Unit of the parameter
 	Unit *string `json:"unit,omitempty"`
 	// Level used for a filter in the UI
-	Level    string  `json:"level"`
+	Level    int     `json:"level"`
 	MinValue *string `json:"minValue,omitempty"`
 	MaxValue *string `json:"maxValue,omitempty"`
 	// Processed "yes" | "no"
