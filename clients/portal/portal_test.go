@@ -93,7 +93,6 @@ func TestGetPatientConfig(t *testing.T) {
 			}
 		default:
 			res.WriteHeader(404)
-			// t.Errorf("Unknown path[%s]", req.URL.Path)
 		}
 	}))
 	defer srvr.Close()

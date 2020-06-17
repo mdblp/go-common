@@ -1,7 +1,5 @@
-// Package portal is a client module to support server-side use of the Diabeloop
-// service called user-api.
-//
 // This file contains the definitions for the patient config
+
 package portal
 
 // PatientConfig structure returned by the API
@@ -75,7 +73,7 @@ type PatientCGMInfo struct {
 	ExpirationDate *string `json:"expirationDate,omitempty"`
 }
 
-// PatientPumpInfo Insulin pump device information.
+// PatientPumpInfo insulin pump device information.
 type PatientPumpInfo struct {
 	// Pump manufacturer: VICENTRA
 	Manufacturer string `json:"manufacturer"`

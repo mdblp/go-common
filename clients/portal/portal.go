@@ -13,18 +13,18 @@ import (
 	"github.com/tidepool-org/go-common/clients/disc"
 )
 
-// Client The interface to portal-api.
+// Client is the interface to portal-api.
 type Client struct {
 	config     *ClientConfig
 	hostGetter disc.HostGetter
 	httpClient *http.Client
 }
 
-// ClientConfig Used to configure this client
+// ClientConfig used to configure this client
 type ClientConfig struct {
 }
 
-// ClientBuilder ...
+// ClientBuilder same as Client but with a different API
 type ClientBuilder struct {
 	config     *ClientConfig
 	hostGetter disc.HostGetter
@@ -42,7 +42,7 @@ func NewPortalClientBuilder() *ClientBuilder {
 	}
 }
 
-// WithHostGetter Set the host getter
+// WithHostGetter set the host getter
 func (b *ClientBuilder) WithHostGetter(val disc.HostGetter) *ClientBuilder {
 	b.hostGetter = val
 	return b
@@ -74,6 +74,7 @@ func (b *ClientBuilder) Build() *Client {
 func (client *Client) getHost() (*url.URL, error) {
 	if hostArr := client.hostGetter.HostGet(); len(hostArr) > 0 {
 		cpy := new(url.URL)
+		// TODO allow to use more than one hostname? :
 		*cpy = hostArr[0]
 		return cpy, nil
 	}
@@ -82,7 +83,7 @@ func (client *Client) getHost() (*url.URL, error) {
 
 // GetPatientConfig Return the patient configuration
 //
-// It use the patient token, to identify the patient to use
+// The token parameter is used to identify the patient.
 func (client *Client) GetPatientConfig(token string) (*PatientConfig, error) {
 	host, err := client.getHost()
 	if host == nil || err != nil {
