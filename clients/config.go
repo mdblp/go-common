@@ -7,7 +7,6 @@ import (
 	"github.com/tidepool-org/go-common/clients/disc"
 	"github.com/tidepool-org/go-common/clients/hakken"
 	"github.com/tidepool-org/go-common/clients/highwater"
-	"github.com/tidepool-org/go-common/clients/portal"
 	"github.com/tidepool-org/go-common/clients/shoreline"
 )
 
@@ -79,7 +78,6 @@ func (hc *HighwaterConfig) ToHostGetter(discovery disc.Discovery) disc.HostGette
 
 // PortalConfig to use portal-api client
 type PortalConfig struct {
-	portal.Client
 	HostGetter HostGetterConfig `json:"serviceSpec"`
 }
 
