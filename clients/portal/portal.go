@@ -14,19 +14,18 @@ import (
 )
 
 // Client is the interface to portal-api.
-type Client struct {
-	config     *ClientConfig
+type Client interface {
+	GetPatientConfig(token string) (*PatientConfig, error)
+}
+
+// ClientStruct used to store infos for this API
+type ClientStruct struct {
 	hostGetter disc.HostGetter
 	httpClient *http.Client
 }
 
-// ClientConfig used to configure this client
-type ClientConfig struct {
-}
-
 // ClientBuilder same as Client but with a different API
 type ClientBuilder struct {
-	config     *ClientConfig
 	hostGetter disc.HostGetter
 	httpClient *http.Client
 }
@@ -37,9 +36,7 @@ const (
 
 // NewPortalClientBuilder create a new ClientBuilder
 func NewPortalClientBuilder() *ClientBuilder {
-	return &ClientBuilder{
-		config: &ClientConfig{},
-	}
+	return &ClientBuilder{}
 }
 
 // WithHostGetter set the host getter
@@ -55,7 +52,7 @@ func (b *ClientBuilder) WithHTTPClient(val *http.Client) *ClientBuilder {
 }
 
 // Build the portal client
-func (b *ClientBuilder) Build() *Client {
+func (b *ClientBuilder) Build() *ClientStruct {
 	if b.hostGetter == nil {
 		panic("PortalClient requires a hostGetter to be set")
 	}
@@ -64,14 +61,13 @@ func (b *ClientBuilder) Build() *Client {
 		b.httpClient = http.DefaultClient
 	}
 
-	return &Client{
-		config:     b.config,
+	return &ClientStruct{
 		hostGetter: b.hostGetter,
 		httpClient: b.httpClient,
 	}
 }
 
-func (client *Client) getHost() (*url.URL, error) {
+func (client *ClientStruct) getHost() (*url.URL, error) {
 	if hostArr := client.hostGetter.HostGet(); len(hostArr) > 0 {
 		cpy := new(url.URL)
 		// TODO allow to use more than one hostname? :
@@ -84,7 +80,7 @@ func (client *Client) getHost() (*url.URL, error) {
 // GetPatientConfig Return the patient configuration
 //
 // The token parameter is used to identify the patient.
-func (client *Client) GetPatientConfig(token string) (*PatientConfig, error) {
+func (client *ClientStruct) GetPatientConfig(token string) (*PatientConfig, error) {
 	host, err := client.getHost()
 	if host == nil || err != nil {
 		return nil, err

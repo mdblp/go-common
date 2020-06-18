@@ -79,7 +79,7 @@ func (hc *HighwaterConfig) ToHostGetter(discovery disc.Discovery) disc.HostGette
 
 // PortalConfig to use portal-api client
 type PortalConfig struct {
-	portal.ClientConfig
+	portal.Client
 	HostGetter HostGetterConfig `json:"serviceSpec"`
 }
 
