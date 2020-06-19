@@ -2,7 +2,7 @@
 
 Go-Common is the library of common functions for Tidepool's Go-based applications
 
-## Unreleased
+## 0.5.0 - 2020-06-19
 - PT-1383 Add portal-api client to fetch the PatientConfig
 
 ## 0.4.0 - 2020-04-14
