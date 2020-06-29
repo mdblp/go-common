@@ -1,12 +1,13 @@
 package clients
 
 import (
+	"log"
+	"net/url"
+
 	"github.com/tidepool-org/go-common/clients/disc"
 	"github.com/tidepool-org/go-common/clients/hakken"
 	"github.com/tidepool-org/go-common/clients/highwater"
 	"github.com/tidepool-org/go-common/clients/shoreline"
-	"log"
-	"net/url"
 )
 
 type HostGetterConfig interface{}
@@ -75,10 +76,21 @@ func (hc *HighwaterConfig) ToHostGetter(discovery disc.Discovery) disc.HostGette
 	return ToHostGetter("highwater", &hc.HostGetter, discovery)
 }
 
+// PortalConfig to use portal-api client
+type PortalConfig struct {
+	HostGetter HostGetterConfig `json:"serviceSpec"`
+}
+
+// ToHostGetter return the host getter for portal-api
+func (hc *PortalConfig) ToHostGetter(discovery disc.Discovery) disc.HostGetter {
+	return ToHostGetter("portal", &hc.HostGetter, discovery)
+}
+
 type Config struct {
 	HakkenConfig     hakken.HakkenClientConfig `json:"hakken"`
 	GatekeeperConfig GatekeeperConfig          `json:"gatekeeper"`
 	SeagullConfig    SeagullConfig             `json:"seagull"`
 	ShorelineConfig  ShorelineConfig           `json:"shoreline"`
 	HighwaterConfig  HighwaterConfig           `json:"highwater"`
+	PortalConfig     PortalConfig              `json:"portal"`
 }
