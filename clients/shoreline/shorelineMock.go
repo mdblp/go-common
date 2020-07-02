@@ -2,6 +2,7 @@ package shoreline
 
 import (
 	"log"
+	"strings"
 )
 
 type ShorelineMockClient struct {
@@ -53,6 +54,8 @@ func (client *ShorelineMockClient) GetUser(userID, token string) (*UserData, err
 		return nil, nil
 	} else if userID == "WithoutPassword" {
 		return &UserData{UserID: userID, Username: "From Mock", Emails: []string{userID}, PasswordExists: false}, nil
+	} else if strings.Contains(strings.ToLower(userID), "clinic") {
+		return &UserData{UserID: userID, Username: "From Mock", Emails: []string{userID}, PasswordExists: false, Roles: []string{"clinic"}}, nil
 	} else {
 		return &UserData{UserID: userID, Username: "From Mock", Emails: []string{userID}, PasswordExists: true}, nil
 	}
