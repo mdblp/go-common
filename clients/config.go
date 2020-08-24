@@ -5,7 +5,6 @@ import (
 	"net/url"
 
 	"github.com/tidepool-org/go-common/clients/disc"
-	"github.com/tidepool-org/go-common/clients/hakken"
 	"github.com/tidepool-org/go-common/clients/highwater"
 	"github.com/tidepool-org/go-common/clients/shoreline"
 )
@@ -87,10 +86,9 @@ func (hc *PortalConfig) ToHostGetter(discovery disc.Discovery) disc.HostGetter {
 }
 
 type Config struct {
-	HakkenConfig     hakken.HakkenClientConfig `json:"hakken"`
-	GatekeeperConfig GatekeeperConfig          `json:"gatekeeper"`
-	SeagullConfig    SeagullConfig             `json:"seagull"`
-	ShorelineConfig  ShorelineConfig           `json:"shoreline"`
-	HighwaterConfig  HighwaterConfig           `json:"highwater"`
-	PortalConfig     PortalConfig              `json:"portal"`
+	GatekeeperConfig GatekeeperConfig `json:"gatekeeper"`
+	SeagullConfig    SeagullConfig    `json:"seagull"`
+	ShorelineConfig  ShorelineConfig  `json:"shoreline"`
+	HighwaterConfig  HighwaterConfig  `json:"highwater"`
+	PortalConfig     PortalConfig     `json:"portal"`
 }
