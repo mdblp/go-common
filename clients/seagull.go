@@ -7,8 +7,8 @@ import (
 	"net/url"
 	"path"
 
-	"github.com/tidepool-org/go-common/clients/disc"
-	"github.com/tidepool-org/go-common/clients/status"
+	"github.com/mdblp/go-common/clients/disc"
+	"github.com/mdblp/go-common/clients/status"
 )
 
 type (

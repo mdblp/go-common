@@ -4,9 +4,9 @@ import (
 	"log"
 	"net/url"
 
-	"github.com/tidepool-org/go-common/clients/disc"
-	"github.com/tidepool-org/go-common/clients/highwater"
-	"github.com/tidepool-org/go-common/clients/shoreline"
+	"github.com/mdblp/go-common/clients/disc"
+	"github.com/mdblp/go-common/clients/highwater"
+	"github.com/mdblp/go-common/clients/shoreline"
 )
 
 type HostGetterConfig interface{}

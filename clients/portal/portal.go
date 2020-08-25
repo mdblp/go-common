@@ -10,7 +10,7 @@ import (
 	"net/url"
 	"path"
 
-	"github.com/tidepool-org/go-common/clients/disc"
+	"github.com/mdblp/go-common/clients/disc"
 )
 
 // Client is the interface to portal-api.

@@ -14,10 +14,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tidepool-org/go-common/clients/disc"
-	"github.com/tidepool-org/go-common/clients/status"
-	"github.com/tidepool-org/go-common/errors"
-	"github.com/tidepool-org/go-common/jepson"
+	"github.com/mdblp/go-common/clients/disc"
+	"github.com/mdblp/go-common/clients/status"
+	"github.com/mdblp/go-common/errors"
+	"github.com/mdblp/go-common/jepson"
 )
 
 // Client interface that we will implement and mock

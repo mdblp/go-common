@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tidepool-org/go-common/clients/disc"
+	"github.com/mdblp/go-common/clients/disc"
 )
 
 const name = "test"

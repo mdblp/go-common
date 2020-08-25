@@ -9,7 +9,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/tidepool-org/go-common/clients/disc"
+	"github.com/mdblp/go-common/clients/disc"
 )
 
 // Client interface that we will implement and mock

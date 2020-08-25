@@ -2,13 +2,13 @@ package mongo
 
 import (
 	"crypto/tls"
-	"os"
 	"net"
+	"os"
 	"time"
 
 	"github.com/globalsign/mgo"
-	"github.com/tidepool-org/go-common/errors"
-	"github.com/tidepool-org/go-common/jepson"
+	"github.com/mdblp/go-common/errors"
+	"github.com/mdblp/go-common/jepson"
 )
 
 type Config struct {
@@ -23,7 +23,7 @@ type Config struct {
 	OptParams        string           `json:"optParams"`
 }
 
-func(config *Config) FromEnv() {
+func (config *Config) FromEnv() {
 	config.Scheme, _ = os.LookupEnv("TIDEPOOL_STORE_SCHEME")
 	config.Hosts, _ = os.LookupEnv("TIDEPOOL_STORE_ADDRESSES")
 	config.User, _ = os.LookupEnv("TIDEPOOL_STORE_USERNAME")
@@ -44,10 +44,10 @@ func (config *Config) ToConnectionString() (string, error) {
 
 	var cs string
 	if config.Scheme != "" {
-	  cs = config.Scheme + "://"
+		cs = config.Scheme + "://"
 	} else {
-	  cs = "mongodb://"
-        }
+		cs = "mongodb://"
+	}
 
 	if config.User != "" {
 		cs += config.User
@@ -106,4 +106,3 @@ func Connect(config *Config) (*mgo.Session, error) {
 	}
 	return mgo.DialWithInfo(dialInfo)
 }
-

@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/tidepool-org/go-common/jepson"
+	"github.com/mdblp/go-common/jepson"
 )
 
 type ServiceListing struct {
