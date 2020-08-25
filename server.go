@@ -10,12 +10,16 @@ import (
 
 type Server struct {
 	*http.Server
-
-	stop chan chan error
+	logger *log.Logger
+	stop   chan chan error
 }
 
-func NewServer(srv *http.Server) *Server {
-	return &Server{Server: srv, stop: make(chan chan error)}
+func NewServer(srv *http.Server, logger *log.Logger) *Server {
+	return &Server{
+		Server: srv,
+		logger: logger,
+		stop:   make(chan chan error),
+	}
 }
 
 func (s *Server) Close() error {
@@ -81,11 +85,11 @@ func (srv *Server) ListenAndServe() error {
 		return err
 	}
 
-	log.Print("Server listening at ", addr)
+	srv.logger.Print("Server listening at ", addr)
 	go func() {
 		select {
 		case done := <-srv.stop:
-			log.Print("Closing listener at ", addr)
+			srv.logger.Print("Closing listener at ", addr)
 			done <- ln.Close()
 		}
 	}()
@@ -128,14 +132,14 @@ func (srv *Server) ListenAndServeTLS(certFile, keyFile string) error {
 	if err != nil {
 		return err
 	}
-	log.Print("Server listening at ", addr)
+	srv.logger.Print("Server listening at ", addr)
 
 	tlsListener := tls.NewListener(tcpKeepAliveListener{ln.(*net.TCPListener)}, config)
 
 	go func() {
 		select {
 		case done := <-srv.stop:
-			log.Print("Closing listener at ", addr)
+			srv.logger.Print("Closing listener at ", addr)
 			done <- tlsListener.Close()
 		}
 	}()
