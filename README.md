@@ -1,6 +1,9 @@
 go-common
 =========
 
-[![Build Status](https://travis-ci.org/tidepool-org/go-common.png)](https://travis-ci.org/tidepool-org/go-common)
+[![Build Status](https://travis-ci.org/mdblp/go-common.svg?branch=master)](https://travis-ci.org/github/mdblp/go-common)
 
-The library of common functions for Tidepool's Go-based applications.
+
+The library of common functions for Diabeloop's Go-based applications.
+
+Based on Tidepool: https://github.com/tidepool-org/go-common

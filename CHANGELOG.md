@@ -2,6 +2,12 @@
 
 Go-Common is the library of common functions for Tidepool's Go-based applications
 
+## 0.6.0-beta1 - 2020-08-25
+- PT-1479 Allow services to start without a database connection
+  * Use the official mongodb driver
+  * Remove mgo sources
+  * Remove hakken client
+
 ## 0.5.0 - 2020-06-19
 - PT-1383 Add portal-api client to fetch the PatientConfig
 

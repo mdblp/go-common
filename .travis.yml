@@ -1,13 +1,17 @@
 language: go
+os: linux
+dist: bionic
 
-go:
- - 1.11.4
- - 1.12
+jobs:
+  include:
+    - go: 1.12.17
+      env: GO111MODULE=on
+    - go: 1.14.x
+  allow_failures:
+    - go: 1.14.x
 
-env:
-  # Using Go module (go 1.12 need this variable to be set to enable modules)
-  # The variable should default to "on", in Go 1.14 release
-  - GO111MODULE="on"
+services:
+  - mongodb
 
 script:
   - go get
