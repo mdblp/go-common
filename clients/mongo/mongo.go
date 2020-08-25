@@ -1,16 +1,20 @@
 package mongo
 
 import (
-	"crypto/tls"
-	"net"
+	"context"
+	"log"
 	"os"
 	"time"
 
-	"github.com/globalsign/mgo"
 	"github.com/mdblp/go-common/errors"
 	"github.com/mdblp/go-common/jepson"
+
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
+// Config of the mongo database
 type Config struct {
 	ConnectionString string           `json:"connectionString"`
 	Timeout          *jepson.Duration `json:"timeout"`
@@ -23,6 +27,16 @@ type Config struct {
 	OptParams        string           `json:"optParams"`
 }
 
+// Store contains the connection information
+type Store struct {
+	logger *log.Logger
+	client *mongo.Client
+	PingOK bool
+}
+
+const defaultTimeout = time.Second * 2
+
+// FromEnv read the mongo config from the environment variables
 func (config *Config) FromEnv() {
 	config.Scheme, _ = os.LookupEnv("TIDEPOOL_STORE_SCHEME")
 	config.Hosts, _ = os.LookupEnv("TIDEPOOL_STORE_ADDRESSES")
@@ -34,7 +48,7 @@ func (config *Config) FromEnv() {
 	config.Ssl = found && ssl == "true"
 }
 
-func (config *Config) ToConnectionString() (string, error) {
+func (config *Config) toConnectionString() (string, error) {
 	if config.ConnectionString != "" {
 		return config.ConnectionString, nil
 	}
@@ -82,27 +96,98 @@ func (config *Config) ToConnectionString() (string, error) {
 	return cs, nil
 }
 
-func Connect(config *Config) (*mgo.Session, error) {
-	connectionString, err := config.ToConnectionString()
+// Connect perform a mongo connexion.
+// The connexion may not be directly available, but we will retry
+func Connect(config *Config, logger *log.Logger) (*Store, error) {
+	connectionString, err := config.toConnectionString()
 	if err != nil {
 		return nil, err
 	}
-	dur := 20 * time.Second
-	if config.Timeout != nil {
-		dur = time.Duration(*config.Timeout)
-	}
 
-	dialInfo, err := mgo.ParseURL(connectionString)
+	store := &Store{
+		logger: logger,
+	}
+	client, err := mongo.NewClient(options.Client().ApplyURI(connectionString))
 	if err != nil {
 		return nil, err
 	}
-	dialInfo.Timeout = dur
 
-	if dialInfo.DialServer != nil {
-		// TODO Ignore server cert for now.  We should install proper CA to verify cert.
-		dialInfo.DialServer = func(addr *mgo.ServerAddr) (net.Conn, error) {
-			return tls.Dial("tcp", addr.String(), &tls.Config{InsecureSkipVerify: true})
-		}
+	store.client = client
+
+	// Do the connection async, since the services must be able to start
+	// without the database
+	go store.connectionRoutine()
+
+	return store, nil
+}
+
+func (s *Store) connectionRoutine() {
+	var err error
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	s.logger.Printf("Connecting to mongo...")
+	err = s.client.Connect(ctx)
+	if err != nil {
+		s.logger.Printf("Connection to mongo failed: %v", err)
+		time.Sleep(defaultTimeout)
+		go s.connectionRoutine()
+	} else {
+		s.logger.Printf("Connected to mongo")
+		s.PingOK = true
 	}
-	return mgo.DialWithInfo(dialInfo)
+}
+
+// GetCollection return a collection on a database
+func (s *Store) GetCollection(database, collection string) *mongo.Collection {
+	return s.client.Database(database).Collection(collection)
+}
+
+// Ping the database
+func (s *Store) Ping() error {
+	if s.client == nil {
+		return nil
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+	defer cancel()
+	return s.client.Ping(ctx, readpref.PrimaryPreferred())
+}
+
+// ContinuousPing the database to monitor the database connection
+//
+// Update the Store.PingOK status
+func (s *Store) ContinuousPing(timeout time.Duration) {
+	if s.client == nil {
+		s.logger.Printf("Stopping continuous ping")
+		return
+	}
+
+	time.Sleep(timeout)
+
+	err := s.Ping()
+	if err != nil && s.PingOK {
+		s.logger.Printf("Ping error: %v", err)
+	} else if err == nil && !s.PingOK {
+		s.logger.Printf("Ping: mongo restored")
+	}
+	s.PingOK = err == nil
+
+	go s.ContinuousPing(timeout)
+}
+
+// Disconnect from the database
+func (s *Store) Disconnect() error {
+	if s.client == nil {
+		return nil
+	}
+
+	s.logger.Printf("Disconnecting mongo database...")
+	client := s.client
+	s.client = nil
+
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+	defer cancel()
+
+	err := client.Disconnect(ctx)
+
+	return err
 }

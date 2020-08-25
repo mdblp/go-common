@@ -168,17 +168,17 @@ func (b *ShorelineClientBuilder) Build() *ShorelineClient {
 // that requires a server token
 func (client *ShorelineClient) Start() error {
 	attempts := 0
-	var err error 
+	var err error
 	for attempts < 5 {
 		if err = client.serverLogin(); err != nil {
 			log.Printf("Problem with initial server token acquisition, [%v]", err)
 			attempts++
-			time.Sleep(10*time.Second) 
+			time.Sleep(10 * time.Second)
 		} else {
-			break 
+			break
 		}
 	}
-	
+
 	if err != nil {
 		return err
 	}
@@ -233,7 +233,7 @@ func (client *ShorelineClient) serverLogin() error {
 
 	if res.StatusCode != 200 {
 		return &status.StatusError{
-			status.NewStatusf(res.StatusCode, "Unknown response code from service[%s]", req.URL)}
+			Status: status.NewStatusf(res.StatusCode, "Unknown response code from service[%s]", req.URL)}
 	}
 	token := res.Header.Get("x-tidepool-session-token")
 
@@ -252,12 +252,12 @@ func extractUserData(r io.Reader) (*UserData, error) {
 	return &ud, nil
 }
 
-// Signs up a new platfrom user
+// Signup a new platfrom user
 // Returns a UserData object if successful
 func (client *ShorelineClient) Signup(username, password, email string) (*UserData, error) {
 	host := client.getHost()
 	if host == nil {
-		return nil, errors.New("No known user-api hosts.")
+		return nil, errors.New("no known user-api hosts")
 	}
 
 	host.Path = path.Join(host.Path, "user")
@@ -280,7 +280,9 @@ func (client *ShorelineClient) Signup(username, password, email string) (*UserDa
 
 		return ud, nil
 	default:
-		return nil, &status.StatusError{status.NewStatus(res.StatusCode, "There was an issue trying to signup a new user")}
+		return nil, &status.StatusError{
+			Status: status.NewStatus(res.StatusCode, "There was an issue trying to signup a new user"),
+		}
 	}
 }
 

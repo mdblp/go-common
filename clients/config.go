@@ -41,14 +41,6 @@ func ToHostGetter(name string, c *HostGetterConfig, discovery disc.Discovery) di
 	panic("Appease the compiler, code should never get here")
 }
 
-type GatekeeperConfig struct {
-	HostGetter HostGetterConfig `json:"serviceSpec"`
-}
-
-func (gc *GatekeeperConfig) ToHostGetter(discovery disc.Discovery) disc.HostGetter {
-	return ToHostGetter("gatekeeper", &gc.HostGetter, discovery)
-}
-
 type SeagullConfig struct {
 	HostGetter HostGetterConfig `json:"serviceSpec"`
 }
@@ -86,9 +78,8 @@ func (hc *PortalConfig) ToHostGetter(discovery disc.Discovery) disc.HostGetter {
 }
 
 type Config struct {
-	GatekeeperConfig GatekeeperConfig `json:"gatekeeper"`
-	SeagullConfig    SeagullConfig    `json:"seagull"`
-	ShorelineConfig  ShorelineConfig  `json:"shoreline"`
-	HighwaterConfig  HighwaterConfig  `json:"highwater"`
-	PortalConfig     PortalConfig     `json:"portal"`
+	SeagullConfig   SeagullConfig   `json:"seagull"`
+	ShorelineConfig ShorelineConfig `json:"shoreline"`
+	HighwaterConfig HighwaterConfig `json:"highwater"`
+	PortalConfig    PortalConfig    `json:"portal"`
 }

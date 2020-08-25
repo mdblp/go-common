@@ -3,12 +3,12 @@ package clients
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
 	"path"
 
-	"github.com/mdblp/go-common/clients/disc"
 	"github.com/mdblp/go-common/clients/status"
 	"github.com/mdblp/go-common/errors"
 )
@@ -37,21 +37,24 @@ type (
 	}
 
 	gatekeeperClient struct {
-		httpClient    *http.Client    // store a reference to the http client so we can reuse it
-		hostGetter    disc.HostGetter // The getter that provides the host to talk to for the client
-		tokenProvider TokenProvider   // An object that provides tokens for communicating with gatekeeper
+		httpClient    *http.Client // store a reference to the http client so we can reuse it
+		host          string
+		tokenProvider TokenProvider // An object that provides tokens for communicating with gatekeeper
 	}
 
 	gatekeeperClientBuilder struct {
-		httpClient    *http.Client    // store a reference to the http client so we can reuse it
-		hostGetter    disc.HostGetter // The getter that provides the host to talk to for the client
-		tokenProvider TokenProvider   // An object that provides tokens for communicating with gatekeeper
+		httpClient    *http.Client // store a reference to the http client so we can reuse it
+		host          string
+		tokenProvider TokenProvider // An object that provides tokens for communicating with gatekeeper
 	}
 
 	Permission       map[string]interface{}
 	Permissions      map[string]Permission
 	UsersPermissions map[string]Permissions
 )
+
+// defaultHost for Gatekeeper client
+const defaultHost = "http://localhost:9123"
 
 var (
 	Allowed Permission = Permission{}
@@ -66,8 +69,9 @@ func (b *gatekeeperClientBuilder) WithHttpClient(httpClient *http.Client) *gatek
 	return b
 }
 
-func (b *gatekeeperClientBuilder) WithHostGetter(hostGetter disc.HostGetter) *gatekeeperClientBuilder {
-	b.hostGetter = hostGetter
+// WithHost set the gatekeeper URL
+func (b *gatekeeperClientBuilder) WithHost(host string) *gatekeeperClientBuilder {
+	b.host = host
 	return b
 }
 
@@ -77,8 +81,9 @@ func (b *gatekeeperClientBuilder) WithTokenProvider(tokenProvider TokenProvider)
 }
 
 func (b *gatekeeperClientBuilder) Build() *gatekeeperClient {
-	if b.hostGetter == nil {
-		panic("gatekeeperClient requires a hostGetter to be set")
+	if b.host == "" {
+		log.Printf("No Gatekeeper host set using default %s", defaultHost)
+		b.host = defaultHost
 	}
 	if b.tokenProvider == nil {
 		panic("gatekeeperClient requires a tokenProvider to be set")
@@ -90,7 +95,7 @@ func (b *gatekeeperClientBuilder) Build() *gatekeeperClient {
 
 	return &gatekeeperClient{
 		httpClient:    b.httpClient,
-		hostGetter:    b.hostGetter,
+		host:          b.host,
 		tokenProvider: b.tokenProvider,
 	}
 }
@@ -100,7 +105,7 @@ func (b *gatekeeperClientBuilder) Build() *gatekeeperClient {
 // userID ID of the user to check for having permissions to view subject's data
 // groupID ID of the user subject
 func (client *gatekeeperClient) UserInGroup(userID, groupID string) (Permissions, error) {
-	host := client.getHost()
+	host, err := client.getHost()
 	if host == nil {
 		return nil, errors.New("No known gatekeeper hosts")
 	}
@@ -133,9 +138,9 @@ func (client *gatekeeperClient) UserInGroup(userID, groupID string) (Permissions
 // original route /access/{userid}
 // groupID ID of the user subject
 func (client *gatekeeperClient) UsersInGroup(groupID string) (UsersPermissions, error) {
-	host := client.getHost()
-	if host == nil {
-		return nil, errors.New("No known gatekeeper hosts")
+	host, err := client.getHost()
+	if err != nil {
+		return nil, fmt.Errorf("Gatekeeper url is invalid: %v", err)
 	}
 	host.Path = path.Join(host.Path, "access", groupID)
 
@@ -166,9 +171,9 @@ func (client *gatekeeperClient) UsersInGroup(groupID string) (UsersPermissions, 
 // original route /access/groups/{userid}
 // userID ID of the user subject
 func (client *gatekeeperClient) GroupsForUser(userID string) (UsersPermissions, error) {
-	host := client.getHost()
-	if host == nil {
-		return nil, errors.New("No known gatekeeper hosts")
+	host, err := client.getHost()
+	if err != nil {
+		return nil, fmt.Errorf("Gatekeeper url is invalid: %v", err)
 	}
 	host.Path = path.Join(host.Path, "access", "groups", userID)
 
@@ -196,9 +201,9 @@ func (client *gatekeeperClient) GroupsForUser(userID string) (UsersPermissions, 
 }
 
 func (client *gatekeeperClient) SetPermissions(userID, groupID string, permissions Permissions) (Permissions, error) {
-	host := client.getHost()
-	if host == nil {
-		return nil, errors.New("No known gatekeeper hosts")
+	host, err := client.getHost()
+	if err != nil {
+		return nil, fmt.Errorf("Gatekeeper url is invalid: %v", err)
 	}
 	host.Path = path.Join(host.Path, "access", groupID, userID)
 
@@ -231,12 +236,6 @@ func (client *gatekeeperClient) SetPermissions(userID, groupID string, permissio
 	}
 }
 
-func (client *gatekeeperClient) getHost() *url.URL {
-	if hostArr := client.hostGetter.HostGet(); len(hostArr) > 0 {
-		cpy := new(url.URL)
-		*cpy = hostArr[0]
-		return cpy
-	} else {
-		return nil
-	}
+func (client *gatekeeperClient) getHost() (*url.URL, error) {
+	return url.Parse(client.host)
 }
