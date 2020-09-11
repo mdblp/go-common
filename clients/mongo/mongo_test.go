@@ -115,12 +115,12 @@ func TestConnection(t *testing.T) {
 
 	// Expect the connection to be established
 	time.Sleep(100 * time.Millisecond)
-	if !store.PingOK {
+	if !store.PingOK() {
 		t.Errorf("connection routine failed")
 	}
 
 	err = store.Ping()
-	if err != nil || !store.PingOK {
+	if err != nil || !store.PingOK() {
 		t.Errorf("ping failed: %v", err)
 	}
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/mdblp/go-common/errors"
@@ -29,9 +30,11 @@ type Config struct {
 
 // Store contains the connection information
 type Store struct {
-	logger *log.Logger
-	client *mongo.Client
-	PingOK bool
+	logger    *log.Logger
+	client    *mongo.Client
+	pingOK    bool
+	clientMux sync.Mutex
+	pingOkMux sync.Mutex
 }
 
 const defaultTimeout = time.Second * 2
@@ -112,51 +115,72 @@ func Connect(config *Config, logger *log.Logger) (*Store, error) {
 		return nil, err
 	}
 
-	store.client = client
-
 	// Do the connection async, since the services must be able to start
 	// without the database
-	go store.connectionRoutine()
+	go store.connectionRoutine(client)
 
 	return store, nil
 }
 
-func (s *Store) connectionRoutine() {
+func (s *Store) getClient() *mongo.Client {
+	s.clientMux.Lock()
+	defer s.clientMux.Unlock()
+	return s.client
+}
+func (s *Store) setClient(cli *mongo.Client) {
+	s.clientMux.Lock()
+	defer s.clientMux.Unlock()
+	s.client = cli
+}
+
+func (s *Store) PingOK() bool {
+	s.pingOkMux.Lock()
+	defer s.pingOkMux.Unlock()
+	return s.pingOK
+}
+func (s *Store) setPingOK(ping bool) {
+	s.pingOkMux.Lock()
+	defer s.pingOkMux.Unlock()
+	s.pingOK = ping
+}
+
+func (s *Store) connectionRoutine(client *mongo.Client) {
 	var err error
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	s.logger.Printf("Connecting to mongo...")
-	err = s.client.Connect(ctx)
+	err = client.Connect(ctx)
 	if err != nil {
 		s.logger.Printf("Connection to mongo failed: %v", err)
 		time.Sleep(defaultTimeout)
-		go s.connectionRoutine()
+		go s.connectionRoutine(client)
 	} else {
 		s.logger.Printf("Connected to mongo")
-		s.PingOK = true
+		s.setPingOK(true)
+		s.setClient(client)
 	}
 }
 
 // GetCollection return a collection on a database
 func (s *Store) GetCollection(database, collection string) *mongo.Collection {
-	return s.client.Database(database).Collection(collection)
+	return s.getClient().Database(database).Collection(collection)
 }
 
 // Ping the database
 func (s *Store) Ping() error {
-	if s.client == nil {
+	if s.getClient() == nil {
 		return nil
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 	defer cancel()
-	return s.client.Ping(ctx, readpref.PrimaryPreferred())
+	return s.getClient().Ping(ctx, readpref.PrimaryPreferred())
 }
 
 // ContinuousPing the database to monitor the database connection
 //
 // Update the Store.PingOK status
 func (s *Store) ContinuousPing(timeout time.Duration) {
-	if s.client == nil {
+	if s.getClient() == nil {
 		s.logger.Printf("Stopping continuous ping")
 		return
 	}
@@ -164,25 +188,25 @@ func (s *Store) ContinuousPing(timeout time.Duration) {
 	time.Sleep(timeout)
 
 	err := s.Ping()
-	if err != nil && s.PingOK {
+	if err != nil && s.PingOK() {
 		s.logger.Printf("Ping error: %v", err)
-	} else if err == nil && !s.PingOK {
+	} else if err == nil && !s.PingOK() {
 		s.logger.Printf("Ping: mongo restored")
 	}
-	s.PingOK = err == nil
+	s.setPingOK(err == nil)
 
 	go s.ContinuousPing(timeout)
 }
 
 // Disconnect from the database
 func (s *Store) Disconnect() error {
-	if s.client == nil {
+	if s.getClient() == nil {
 		return nil
 	}
 
 	s.logger.Printf("Disconnecting mongo database...")
-	client := s.client
-	s.client = nil
+	client := s.getClient()
+	s.setClient(nil)
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 	defer cancel()

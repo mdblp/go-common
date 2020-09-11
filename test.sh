@@ -6,5 +6,5 @@ TESTDIRS=$(find . -name "*_test.go" -and ! -path "./src/*" | xargs dirname | sor
 
 for i in $TESTDIRS; do
     echo Testing in $i:
-    (cd $i; go test -v)
+    (cd $i; go test -race -v)
 done
