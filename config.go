@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strconv"
 )
 
 func LoadConfig(filenames []string, obj interface{}) error {
@@ -37,6 +38,19 @@ func LoadEnvironmentConfig(envVars []string, obj interface{}) error {
 		}
 	}
 	return nil
+}
+
+func GetEnvironmentInt64(envVar string, defaultValue int64) int64 {
+	stringValue, found := os.LookupEnv(envVar)
+	var intValue int64
+	var err error
+	if found {
+		intValue, err = strconv.ParseInt(stringValue, 10, 0)
+	}
+	if !found || err != nil {
+		intValue = defaultValue
+	}
+	return intValue
 }
 
 type ServiceConfig struct {
