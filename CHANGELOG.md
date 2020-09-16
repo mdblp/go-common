@@ -2,6 +2,10 @@
 
 Go-Common is the library of common functions for Tidepool's Go-based applications
 
+## 0.6.0 - 2020-06-19
+- PT-1479 Update mongoDb client to be able to start without the database
+- PT-1514 Update shoreline client to be able to start without acquiring server token
+
 ## 0.5.0 - 2020-06-19
 - PT-1383 Add portal-api client to fetch the PatientConfig
 
