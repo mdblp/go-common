@@ -13,7 +13,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
-// Store contains the connection information
+// Store and Mongo clients used to manage database connections 
 type (
 	// StorageIterator - Interface for the query iterator
 	StorageIterator interface {
@@ -40,7 +40,6 @@ type (
 		initializeGroup sync.WaitGroup
 		pingOK          bool
 		clientMux       sync.Mutex
-		// pingOkMux       sync.Mutex
 	}
 )
 
@@ -127,7 +126,7 @@ func (s *StoreClient) connectionRoutine() {
 	err := s.Ping()
 	var attempts int64
 	if err != nil {
-		s.logger.Printf("Unable to ping store initially : %v", err)
+		s.logger.Printf("Unable to open inital store session : %v", err)
 		s.closingChannel = make(chan bool, 1)
 		for {
 			timer := time.After(s.config.WaitConnectionInterval)
@@ -140,16 +139,17 @@ func (s *StoreClient) connectionRoutine() {
 			case <-timer:
 				err := s.Ping()
 				if err == nil {
+					s.logger.Debug("Store session opened succesfully")
 					s.logger.Printf("Store pinged succesfully after %v attempts, creating indexes", attempts)
 					s.createIndexesFromConfig()
 					s.closingChannel <- true
 				} else {
 					if s.config.MaxConnectionAttempts > 0 && s.config.MaxConnectionAttempts < attempts {
-						s.logger.Printf("Unable to ping store, maximum ping attempts (%v/%v) reached : %v", s.config.MaxConnectionAttempts, attempts, err)
+						s.logger.Printf("Unable to open store session, maximum connection attempts reached (%v) : %v", s.config.MaxConnectionAttempts, err)
 						s.closingChannel <- true
 						panic(err)
 					} else {
-						s.logger.Printf("Unable to ping store : %v", err)
+						s.logger.Printf("Unable to open store session : %v", err)
 						attempts++
 					}
 				}

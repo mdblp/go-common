@@ -49,6 +49,7 @@ func (config *Config) FromEnv() {
 	waitConnectionInterval := common.GetEnvironmentInt64("TIDEPOOL_STORE_WAIT_CONNECTION_INTERVAL", 5)
 	config.WaitConnectionInterval = time.Duration(waitConnectionInterval) * time.Second
 	config.MaxConnectionAttempts = common.GetEnvironmentInt64("TIDEPOOL_STORE_MAX_CONNECTION_ATTEMPTS", 0)
+	// O is the default value to keep service running when db is not available
 
 }
 
