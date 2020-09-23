@@ -95,6 +95,41 @@ func TestLogin(t *testing.T) {
 	}
 }
 
+func TestClient(t *testing.T) {
+	attempts := 0
+	srvr := httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		switch req.URL.Path {
+		case "/serverlogin":
+			if attempts < 3 {
+				http.Error(res, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+			} else {
+				res.Header().Set("x-tidepool-session-token", token)
+			}
+			attempts++
+		default:
+			t.Errorf("Unknown path[%s]", req.URL.Path)
+		}
+	}))
+	defer srvr.Close()
+
+	shorelineClient := NewShorelineClientBuilder().
+		WithHostGetter(disc.NewStaticHostGetterFromString(srvr.URL)).
+		WithName("test").
+		WithSecret("howdy ho, neighbor joe").
+		WithTokenGetInterval(500 * time.Millisecond).
+		Build()
+
+	err := shorelineClient.Start()
+	if err != nil {
+		t.Errorf("Failed start with error[%v]", err)
+	}
+	defer shorelineClient.Close()
+	time.Sleep(2 * time.Second)
+	if shorelineClient.TokenProvide() != token {
+		t.Errorf("Error on server token acquirement[%v]", err)
+	}
+}
+
 func TestSignup(t *testing.T) {
 	srvr := httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		switch req.URL.Path {

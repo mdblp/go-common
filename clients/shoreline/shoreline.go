@@ -39,15 +39,17 @@ type ShorelineClient struct {
 	hostGetter disc.HostGetter        // The getter that provides the host to talk to for the client
 	config     *ShorelineClientConfig // Configuration for the client
 
-	mut         sync.Mutex
-	serverToken string         // stores the most recently received server token
-	closed      chan chan bool // Channel to communicate that the object has been closed
+	mut            sync.Mutex
+	serverToken    string         // stores the most recently received server token
+	closed         chan chan bool // Channel to communicate that the object has been closed
+	acquiringToken bool           // flag set when the serverLoginLoop is running
 }
 
 type ShorelineClientConfig struct {
 	Name                 string          `json:"name"`                 // The name of this server for use in obtaining a server token
 	Secret               string          `json:"secret"`               // The secret used along with the name to obtain a server token
 	TokenRefreshInterval jepson.Duration `json:"tokenRefreshInterval"` // The amount of time between refreshes of the server token
+	TokenGetInterval     time.Duration   `json:"tokenGetInterval"`     // The amount of time between attempts to get the server token
 }
 
 // UserData is the data structure returned from a successful Login query.
@@ -136,8 +138,13 @@ func (b *ShorelineClientBuilder) WithTokenRefreshInterval(val time.Duration) *Sh
 	return b
 }
 
+func (b *ShorelineClientBuilder) WithTokenGetInterval(val time.Duration) *ShorelineClientBuilder {
+	b.config.TokenGetInterval = val
+	return b
+}
+
 func (b *ShorelineClientBuilder) WithConfig(val *ShorelineClientConfig) *ShorelineClientBuilder {
-	return b.WithName(val.Name).WithSecret(val.Secret).WithTokenRefreshInterval(time.Duration(val.TokenRefreshInterval))
+	return b.WithName(val.Name).WithSecret(val.Secret).WithTokenRefreshInterval(time.Duration(val.TokenRefreshInterval)).WithTokenGetInterval(val.TokenGetInterval)
 }
 
 func (b *ShorelineClientBuilder) Build() *ShorelineClient {
@@ -167,44 +174,80 @@ func (b *ShorelineClientBuilder) Build() *ShorelineClient {
 // Start starts the client and makes it ready for us.  This must be done before using any of the functionality
 // that requires a server token
 func (client *ShorelineClient) Start() error {
-	attempts := 0
-	var err error 
-	for attempts < 5 {
-		if err = client.serverLogin(); err != nil {
-			log.Printf("Problem with initial server token acquisition, [%v]", err)
-			attempts++
-			time.Sleep(10*time.Second) 
-		} else {
-			break 
-		}
+	var err error
+	if err = client.serverLogin(); err != nil {
+		log.Printf("Error on initial server token acquisition, [%v]", err)
+		go client.serverLoginLoop(true)
+	} else {
+		go client.refreshTokenLoop()
 	}
-	
-	if err != nil {
-		return err
-	}
-
-	go func() {
-		for {
-			timer := time.After(time.Duration(client.config.TokenRefreshInterval))
-			select {
-			case twoWay := <-client.closed:
-				twoWay <- true
-				return
-			case <-timer:
-				if err := client.serverLogin(); err != nil {
-					log.Print("Error when refreshing server login", err)
-				}
-			}
-		}
-	}()
 	return nil
 }
 
+func (client *ShorelineClient) serverLoginLoop(launchRefreshTokenLoop bool) {
+	var attempts int64
+	client.mut.Lock()
+	if client.acquiringToken {
+		client.mut.Unlock()
+		return
+	}
+	client.acquiringToken = true
+	client.mut.Unlock()
+	for {
+		timer := time.After(time.Duration(client.config.TokenGetInterval))
+		select {
+		case twoWay := <-client.closed:
+			twoWay <- true
+			return
+		case <-timer:
+			err := client.serverLogin()
+			if err == nil {
+				log.Printf("Server token acquired successfully after %v attempts", attempts)
+				client.mut.Lock()
+				client.acquiringToken = false
+				client.mut.Unlock()
+				if launchRefreshTokenLoop {
+					go client.refreshTokenLoop()
+				}
+				return
+			} else {
+				attempts++
+				log.Printf("Error when getting server token (attempt %v). Error: %v", attempts, err)
+			}
+		}
+	}
+}
+
+func (client *ShorelineClient) refreshTokenLoop() {
+	for {
+		timer := time.After(time.Duration(client.config.TokenRefreshInterval))
+		select {
+		case twoWay := <-client.closed:
+			twoWay <- true
+			return
+		case <-timer:
+			client.mut.Lock()
+			acquireInProgress := client.acquiringToken
+			client.mut.Unlock()
+			if !acquireInProgress {
+				if err := client.serverLogin(); err != nil {
+					log.Printf("Error on  initial server token refresh, [%v]", err)
+					go client.serverLoginLoop(false)
+				}
+			}
+		}
+	}
+}
 func (client *ShorelineClient) Close() {
 	twoWay := make(chan bool)
 	client.closed <- twoWay
 	<-twoWay
-
+	client.mut.Lock()
+	acquireInProgress := client.acquiringToken
+	client.mut.Unlock()
+	if acquireInProgress {
+		<-twoWay
+	}
 	client.mut.Lock()
 	defer client.mut.Unlock()
 	client.serverToken = ""
