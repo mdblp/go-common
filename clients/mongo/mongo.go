@@ -13,7 +13,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
-// Store and Mongo clients used to manage database connections 
+// Store and Mongo clients used to manage database connections
 type (
 	// StorageIterator - Interface for the query iterator
 	StorageIterator interface {
@@ -139,7 +139,7 @@ func (s *StoreClient) connectionRoutine() {
 			case <-timer:
 				err := s.Ping()
 				if err == nil {
-					s.logger.Debug("Store session opened succesfully")
+					s.logger.Print("Store session opened succesfully")
 					s.logger.Printf("Store pinged succesfully after %v attempts, creating indexes", attempts)
 					s.createIndexesFromConfig()
 					s.closingChannel <- true

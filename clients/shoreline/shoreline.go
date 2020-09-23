@@ -177,14 +177,14 @@ func (client *ShorelineClient) Start() error {
 	var err error
 	if err = client.serverLogin(); err != nil {
 		log.Printf("Error on initial server token acquisition, [%v]", err)
-		go client.serverLoginLoop(false)
+		go client.serverLoginLoop(true)
 	} else {
 		go client.refreshTokenLoop()
 	}
 	return nil
 }
 
-func (client *ShorelineClient) serverLoginLoop(refresh bool) {
+func (client *ShorelineClient) serverLoginLoop(launchRefreshTokenLoop bool) {
 	var attempts int64
 	client.mut.Lock()
 	if client.acquiringToken {
@@ -206,7 +206,7 @@ func (client *ShorelineClient) serverLoginLoop(refresh bool) {
 				client.mut.Lock()
 				client.acquiringToken = false
 				client.mut.Unlock()
-				if !refresh {
+				if launchRefreshTokenLoop {
 					go client.refreshTokenLoop()
 				}
 				return
@@ -232,7 +232,7 @@ func (client *ShorelineClient) refreshTokenLoop() {
 			if !acquireInProgress {
 				if err := client.serverLogin(); err != nil {
 					log.Printf("Error on  initial server token refresh, [%v]", err)
-					go client.serverLoginLoop(true)
+					go client.serverLoginLoop(false)
 				}
 			}
 		}
