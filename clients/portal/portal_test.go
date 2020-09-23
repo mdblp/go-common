@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/mdblp/go-common/clients/disc"
+	"github.com/tidepool-org/go-common/clients/disc"
 )
 
 func TestGetPatientConfig(t *testing.T) {
