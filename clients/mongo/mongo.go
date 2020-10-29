@@ -33,7 +33,6 @@ type (
 	// StoreClient - Mongo Storage Client
 	StoreClient struct {
 		client          *mongo.Client
-		Context         context.Context
 		config          *Config
 		logger          *log.Logger
 		closingChannel  chan bool
@@ -53,10 +52,9 @@ func NewStoreClient(config *Config, logger *log.Logger) (*StoreClient, error) {
 	}
 
 	store := &StoreClient{
-		client:  mongoClient,
-		Context: context.Background(),
-		config:  config,
-		logger:  logger,
+		client: mongoClient,
+		config: config,
+		logger: logger,
 	}
 
 	return store, nil
@@ -108,7 +106,7 @@ func (s *StoreClient) Close() error {
 		s.closingChannel <- true
 	}
 	s.initializeGroup.Wait()
-	return s.getClient().Disconnect(s.Context)
+	return s.getClient().Disconnect(context.Background())
 }
 
 func (s *StoreClient) Ping() error {
