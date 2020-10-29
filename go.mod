@@ -1,6 +1,6 @@
 module github.com/mdblp/go-common
 
-go 1.12
+go 1.15
 
 replace github.com/tidepool-org/go-common => ./
 
