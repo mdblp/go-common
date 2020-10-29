@@ -2,6 +2,10 @@
 
 Go-Common is the library of common functions for Tidepool's Go-based applications
 
+## 0.6.2 - 2020-10-29
+### Fixed
+- YLP-255 MongoDb context cancellation issue
+
 ## 0.6.1 - 2020-09-23
 ### Fixed
 - Fixing mdblp vs tidepool-org import path 
