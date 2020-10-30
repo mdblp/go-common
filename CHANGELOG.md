@@ -2,6 +2,8 @@
 
 Go-Common is the library of common functions for Tidepool's Go-based applications
 
+## Unreleased
+
 ## 0.4.0 - 2020-04-14
 ### Added
 - Complete Getekeeper client with missing route
