@@ -1,109 +1,189 @@
 package mongo
 
 import (
-	"crypto/tls"
-	"os"
-	"net"
+	"context"
+	"errors"
+	"fmt"
+	"log"
+	"sync"
 	"time"
 
-	"github.com/globalsign/mgo"
-	"github.com/tidepool-org/go-common/errors"
-	"github.com/tidepool-org/go-common/jepson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
-type Config struct {
-	ConnectionString string           `json:"connectionString"`
-	Timeout          *jepson.Duration `json:"timeout"`
-	Scheme           string           `json:"scheme"`
-	User             string           `json:"user"`
-	Password         string           `json:"password"`
-	Database         string           `json:"database"`
-	Ssl              bool             `json:"ssl"`
-	Hosts            string           `json:"hosts"`
-	OptParams        string           `json:"optParams"`
-}
-
-func(config *Config) FromEnv() {
-	config.Scheme, _ = os.LookupEnv("TIDEPOOL_STORE_SCHEME")
-	config.Hosts, _ = os.LookupEnv("TIDEPOOL_STORE_ADDRESSES")
-	config.User, _ = os.LookupEnv("TIDEPOOL_STORE_USERNAME")
-	config.Password, _ = os.LookupEnv("TIDEPOOL_STORE_PASSWORD")
-	config.Database, _ = os.LookupEnv("TIDEPOOL_STORE_DATABASE")
-	config.OptParams, _ = os.LookupEnv("TIDEPOOL_STORE_OPT_PARAMS")
-	ssl, found := os.LookupEnv("TIDEPOOL_STORE_TLS")
-	config.Ssl = found && ssl == "true"
-}
-
-func (config *Config) ToConnectionString() (string, error) {
-	if config.ConnectionString != "" {
-		return config.ConnectionString, nil
+// Store and Mongo clients used to manage database connections
+type (
+	// StorageIterator - Interface for the query iterator
+	StorageIterator interface {
+		Next(ctx context.Context) bool
+		Close(ctx context.Context) error
+		Decode(val interface{}) error
 	}
-	if config.Database == "" {
-		return "", errors.New("Must specify a database in Mongo config")
+	// Storage - Interface for our storage layer
+	Storage interface {
+		Close() error
+		Collection(collectionName string, databaseName ...string) *mongo.Collection
+		Ping() error
+		PingOK() bool
+		Start()
+		WaitUntilStarted()
 	}
-
-	var cs string
-	if config.Scheme != "" {
-	  cs = config.Scheme + "://"
-	} else {
-	  cs = "mongodb://"
-        }
-
-	if config.User != "" {
-		cs += config.User
-		if config.Password != "" {
-			cs += ":"
-			cs += config.Password
-		}
-		cs += "@"
+	// StoreClient - Mongo Storage Client
+	StoreClient struct {
+		client          *mongo.Client
+		Context         context.Context
+		config          *Config
+		logger          *log.Logger
+		closingChannel  chan bool
+		initializeGroup sync.WaitGroup
+		pingOK          bool
+		clientMux       sync.Mutex
 	}
+)
 
-	if config.Hosts != "" {
-		cs += config.Hosts
-		cs += "/"
-	} else {
-		cs += "localhost/"
+func NewStoreClient(config *Config, logger *log.Logger) (*StoreClient, error) {
+	if config.Timeout <= 0 {
+		return nil, errors.New("timeout is invalid")
 	}
-
-	if config.Database != "" {
-		cs += config.Database
-	}
-
-	if config.Ssl {
-		cs += "?ssl=true"
-	} else {
-		cs += "?ssl=false"
-	}
-
-	if config.OptParams != "" {
-		cs += "&"
-		cs += config.OptParams
-	}
-	return cs, nil
-}
-
-func Connect(config *Config) (*mgo.Session, error) {
-	connectionString, err := config.ToConnectionString()
+	mongoClient, err := newMongoClient(config)
 	if err != nil {
 		return nil, err
 	}
-	dur := 20 * time.Second
-	if config.Timeout != nil {
-		dur = time.Duration(*config.Timeout)
+
+	store := &StoreClient{
+		client:  mongoClient,
+		Context: context.Background(),
+		config:  config,
+		logger:  logger,
 	}
 
-	dialInfo, err := mgo.ParseURL(connectionString)
+	return store, nil
+}
+func newMongoClient(config *Config) (*mongo.Client, error) {
+	connectionString, err := config.toConnectionString()
 	if err != nil {
 		return nil, err
 	}
-	dialInfo.Timeout = dur
-
-	if dialInfo.DialServer != nil {
-		// TODO Ignore server cert for now.  We should install proper CA to verify cert.
-		dialInfo.DialServer = func(addr *mgo.ServerAddr) (net.Conn, error) {
-			return tls.Dial("tcp", addr.String(), &tls.Config{InsecureSkipVerify: true})
-		}
+	clientOptions := options.Client().ApplyURI(connectionString)
+	mongoClient, err := mongo.Connect(context.Background(), clientOptions)
+	if err != nil {
+		return nil, err
 	}
-	return mgo.DialWithInfo(dialInfo)
+	return mongoClient, nil
 }
 
+// Mutex getters / setters
+func (s *StoreClient) getClient() *mongo.Client {
+	s.clientMux.Lock()
+	defer s.clientMux.Unlock()
+	return s.client
+}
+func (s *StoreClient) setClient(cli *mongo.Client) {
+	s.clientMux.Lock()
+	defer s.clientMux.Unlock()
+	s.client = cli
+}
+func (s *StoreClient) PingOK() bool {
+	s.clientMux.Lock()
+	defer s.clientMux.Unlock()
+	return s.pingOK
+}
+func (s *StoreClient) setPingOK(ping bool) {
+	s.clientMux.Lock()
+	defer s.clientMux.Unlock()
+	s.pingOK = ping
+}
+
+func (s *StoreClient) Start() {
+	if s.closingChannel == nil {
+		s.initializeGroup.Add(1)
+		go s.connectionRoutine()
+	}
+}
+
+func (s *StoreClient) Close() error {
+	if s.closingChannel != nil {
+		s.closingChannel <- true
+	}
+	s.initializeGroup.Wait()
+	return s.getClient().Disconnect(s.Context)
+}
+
+func (s *StoreClient) Ping() error {
+	if s.getClient() == nil {
+		return nil
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), s.config.Timeout)
+	defer cancel()
+	err := s.getClient().Ping(ctx, readpref.PrimaryPreferred())
+	s.setPingOK(err == nil)
+	return err
+}
+
+func (s *StoreClient) connectionRoutine() {
+	err := s.Ping()
+	var attempts int64
+	if err != nil {
+		s.logger.Printf("Unable to open inital store session : %v", err)
+		s.closingChannel = make(chan bool, 1)
+		for {
+			timer := time.After(s.config.WaitConnectionInterval)
+			select {
+			case <-s.closingChannel:
+				close(s.closingChannel)
+				s.closingChannel = nil
+				s.initializeGroup.Done()
+				return
+			case <-timer:
+				err := s.Ping()
+				if err == nil {
+					s.logger.Print("Store session opened succesfully")
+					s.logger.Printf("Store pinged succesfully after %v attempts, creating indexes", attempts)
+					s.createIndexesFromConfig()
+					s.closingChannel <- true
+				} else {
+					if s.config.MaxConnectionAttempts > 0 && s.config.MaxConnectionAttempts < attempts {
+						s.logger.Printf("Unable to open store session, maximum connection attempts reached (%v) : %v", s.config.MaxConnectionAttempts, err)
+						s.closingChannel <- true
+						panic(err)
+					} else {
+						s.logger.Printf("Unable to open store session : %v", err)
+						attempts++
+					}
+				}
+			}
+		}
+	} else {
+		s.logger.Printf("Store client up and running, creating indexes")
+		s.createIndexesFromConfig()
+		if s.closingChannel != nil {
+			close(s.closingChannel)
+			s.closingChannel = nil
+		}
+		s.initializeGroup.Done()
+		return
+	}
+}
+func (s *StoreClient) WaitUntilStarted() {
+	s.initializeGroup.Wait()
+}
+
+func (s *StoreClient) Collection(collectionName string, databaseName ...string) *mongo.Collection {
+	dbName := s.config.Database
+	if len(databaseName) > 0 {
+		dbName = databaseName[0]
+	}
+	return s.getClient().Database(dbName).Collection(collectionName)
+}
+
+func (s *StoreClient) createIndexesFromConfig() {
+	if s.config.Indexes != nil {
+		for collection, idxs := range s.config.Indexes {
+			if _, err := s.Collection(collection).Indexes().CreateMany(context.Background(), idxs); err != nil {
+				s.logger.Printf(fmt.Sprintf("Unable to create indexes: %s", err))
+			}
+		}
+	}
+}

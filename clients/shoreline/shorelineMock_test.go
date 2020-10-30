@@ -4,6 +4,14 @@ import (
 	"testing"
 )
 
+func contains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
+}
 func TestMock(t *testing.T) {
 
 	const TOKEN_MOCK = "this is a token"
@@ -35,6 +43,12 @@ func TestMock(t *testing.T) {
 
 	if usr, _ := client.GetUser("billy@howdy.org", TOKEN_MOCK); usr == nil {
 		t.Error("Should give us a mock user")
+	}
+
+	if usr, _ := client.GetUser("a.Clinic@howdy.org", TOKEN_MOCK); usr != nil {
+		if !contains(usr.Roles, "clinic") {
+			t.Error("Should give us a clinic account")
+		}
 	}
 
 	username := "name"
