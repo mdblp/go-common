@@ -2,6 +2,10 @@
 
 Go-Common is the library of common functions for Tidepool's Go-based applications
 
+## Unreleased
+### Added
+- YLP-469 Implement Authorization Client for go services
+
 ## 0.6.2 - 2020-10-29
 ### Fixed
 - YLP-255 MongoDb context cancellation issue
