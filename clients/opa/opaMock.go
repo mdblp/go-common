@@ -37,9 +37,20 @@ func (client *MockClient) SetMockOpaAuth(key string, auth *Authorization, err er
 	}
 }
 
+//GetMockedAuth returns Authorization struct from external packages (opaResult stuct is "private")
+func (client *MockClient) GetMockedAuth(authorized bool, data map[string]interface{}, route string) Authorization {
+	return Authorization{
+		Result: &opaResult{
+			Authorized: authorized,
+			Data:       data,
+			Route:      route,
+		},
+	}
+}
+
 // GetOpaAuth mock the GetPatientConfig call
 func (client *MockClient) GetOpaAuth(req *http.Request) (*Authorization, error) {
-	key := req.Host + req.URL.RequestURI()
+	key := req.Host + req.URL.Path
 	pcc, ok := client.nextOpaAuthCall[key]
 	if !ok {
 		return nil, fmt.Errorf("Unknown response code[404] from service[http://opa/%s]", routeAuth)
