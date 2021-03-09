@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	URL "net/url"
 	"os"
 	"path"
 	"strings"
@@ -140,6 +141,11 @@ func (client *ClientStruct) formatRequest(req *http.Request) (*HTTPInput, error)
 	headers := make(map[string]string)
 	for k := range req.Header {
 		headers[strings.ToLower(k)] = req.Header.Get(k)
+	}
+	if decodedString, err := URL.QueryUnescape(url.RawQuery); err != nil {
+		return nil, fmt.Errorf("Unable to parse query String [%s]", err)
+	} else {
+		url.RawQuery = decodedString
 	}
 	opaReq.Input.Request.Headers = headers
 	opaReq.Input.Request.Method = req.Method

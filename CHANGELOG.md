@@ -2,6 +2,10 @@
 
 Go-Common is the library of common functions for Tidepool's Go-based applications
 
+## 0.7.1 - 2021-03-09
+### Fixed
+- OPA client: decode query string before sending to OPA
+
 ## 0.7.0 - 2021-03-05
 ### Added
 - YLP-469 Implement Authorization Client for go services
