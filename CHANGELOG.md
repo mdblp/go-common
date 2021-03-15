@@ -2,9 +2,12 @@
 
 Go-Common is the library of common functions for Tidepool's Go-based applications
 
-## 0.7.1 - 2021-03-09
+## 0.7.2 - 2021-03-15
 ### Fixed
 - OPA client: decode query string before sending to OPA
+
+### Changed
+- YLP-505: add hcp role, same as done for shoreline change
 
 ## 0.7.0 - 2021-03-05
 ### Added
