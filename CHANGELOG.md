@@ -2,6 +2,13 @@
 
 Go-Common is the library of common functions for Tidepool's Go-based applications
 
+## 0.8.0 - 2021-03-16
+### Changed
+- Removing gatekeeper client
+- Removing hakken hostgetter for seagull client
+### Engineering
+- Jenkins pipeline
+
 ## 0.7.2 - 2021-03-15
 ### Fixed
 - OPA client: decode query string before sending to OPA
