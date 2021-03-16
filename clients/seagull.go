@@ -2,13 +2,15 @@ package clients
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 
-	"github.com/tidepool-org/go-common/clients/disc"
 	"github.com/tidepool-org/go-common/clients/status"
+	"github.com/tidepool-org/go-common/errors"
 )
 
 type (
@@ -29,13 +31,13 @@ type (
 	}
 
 	seagullClient struct {
-		httpClient *http.Client    // store a reference to the http client so we can reuse it
-		hostGetter disc.HostGetter // The getter that provides the host to talk to for the client
+		httpClient *http.Client // store a reference to the http client so we can reuse it
+		host       string
 	}
 
 	seagullClientBuilder struct {
 		httpClient *http.Client
-		hostGetter disc.HostGetter
+		host       string
 	}
 
 	PrivatePair struct {
@@ -53,8 +55,8 @@ func (b *seagullClientBuilder) WithHttpClient(httpClient *http.Client) *seagullC
 	return b
 }
 
-func (b *seagullClientBuilder) WithHostGetter(hostGetter disc.HostGetter) *seagullClientBuilder {
-	b.hostGetter = hostGetter
+func (b *seagullClientBuilder) WithHost(host string) *seagullClientBuilder {
+	b.host = host
 	return b
 }
 
@@ -62,18 +64,25 @@ func (b *seagullClientBuilder) Build() *seagullClient {
 	if b.httpClient == nil {
 		panic("seagullClient requires an httpClient to be set")
 	}
-	if b.hostGetter == nil {
-		panic("seagullClient requires a hostGetter to be set")
+	if b.host == "" {
+		panic("seagullClient requires a host to be set")
 	}
 	return &seagullClient{
 		httpClient: b.httpClient,
-		hostGetter: b.hostGetter,
+		host:       b.host,
 	}
+}
+func NewSeagullClientFromEnv(httpClient *http.Client) *seagullClient {
+	builder := NewSeagullClientBuilder()
+	host, _ := os.LookupEnv("SEAGULL_HOST")
+	return builder.WithHost(host).
+		WithHttpClient(httpClient).
+		Build()
 }
 
 func (client *seagullClient) GetPrivatePair(userID, hashName, token string) *PrivatePair {
-	host := client.getHost()
-	if host == nil {
+	host, err := client.getHost()
+	if err != nil {
 		return nil
 	}
 	host.Path = path.Join(host.Path, userID, "private", hashName)
@@ -103,9 +112,9 @@ func (client *seagullClient) GetPrivatePair(userID, hashName, token string) *Pri
 }
 
 func (client *seagullClient) GetCollection(userID, collectionName, token string, v interface{}) error {
-	host := client.getHost()
-	if host == nil {
-		return nil
+	host, err := client.getHost()
+	if err != nil {
+		return err
 	}
 	host.Path = path.Join(host.Path, userID, collectionName)
 
@@ -136,12 +145,13 @@ func (client *seagullClient) GetCollection(userID, collectionName, token string,
 
 }
 
-func (client *seagullClient) getHost() *url.URL {
-	if hostArr := client.hostGetter.HostGet(); len(hostArr) > 0 {
-		cpy := new(url.URL)
-		*cpy = hostArr[0]
-		return cpy
-	} else {
-		return nil
+func (client *seagullClient) getHost() (*url.URL, error) {
+	if client.host == "" {
+		return nil, errors.New("No client host defined")
 	}
+	theURL, err := url.Parse(client.host)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to parse urlString[%s]", client.host)
+	}
+	return theURL, nil
 }
