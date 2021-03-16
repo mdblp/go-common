@@ -1,0 +1,8 @@
+module: shoreline
+type: golang
+runTests: false
+docker: false
+dockerPushToProduction : false
+publishNpm: false
+publishS3: false
+securityScan: false

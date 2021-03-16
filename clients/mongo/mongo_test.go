@@ -108,6 +108,10 @@ func TestConnection(t *testing.T) {
 		WaitConnectionInterval: 5 * time.Second,
 		MaxConnectionAttempts:  0,
 	}
+	if _, exist := os.LookupEnv("TIDEPOOL_STORE_ADDRESSES"); exist {
+		// if mongo connexion information is provided via env var
+		config.FromEnv()
+	}
 	logger := log.New(os.Stdout, "mongo-test ", log.LstdFlags|log.LUTC|log.Lshortfile)
 
 	store, err := NewStoreClient(&config, logger)
@@ -140,6 +144,11 @@ func TestReConnectionOnStartup(t *testing.T) {
 		WaitConnectionInterval: 1 * time.Second,
 		MaxConnectionAttempts:  10,
 	}
+	address := "localhost:27017"
+	if env_adress, exist := os.LookupEnv("TIDEPOOL_STORE_ADDRESSES"); exist {
+		// if mongo connexion information is provided via env var
+		address = env_adress
+	}
 	logger := log.New(os.Stdout, "mongo-test ", log.LstdFlags|log.LUTC|log.Lshortfile)
 
 	store, err := NewStoreClient(&config, logger)
@@ -154,7 +163,7 @@ func TestReConnectionOnStartup(t *testing.T) {
 		t.Errorf("connection should have fail")
 	}
 	// Expect the connection to be established once server is up
-	store.config.addresses = []string{"localhost:27017"}
+	store.config.addresses = []string{address}
 	client, err := newMongoClient(store.config)
 	if err != nil {
 		t.Errorf("Error creating mongo.client : %v", err)
