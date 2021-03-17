@@ -40,6 +40,7 @@ pipeline {
             post {
                 always {
                     sh 'docker stop mongo4gocommon${RUN_ID} && docker network rm gocommon${RUN_ID}'
+                    junit 'test-report.xml'
                 }
             }
         }
