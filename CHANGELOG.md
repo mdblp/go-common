@@ -6,6 +6,7 @@ Go-Common is the library of common functions for Tidepool's Go-based application
 ### Changed
 - Removing gatekeeper client
 - Removing hakken hostgetter for seagull client
+- Enrich seagull mock
 ### Engineering
 - Jenkins pipeline
 
