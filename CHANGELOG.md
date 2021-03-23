@@ -2,6 +2,10 @@
 
 Go-Common is the library of common functions for Tidepool's Go-based applications
 
+## 0.8.1 - 2021-03-23
+### Engineering
+- Fixing publish step in jenkins pipeline
+
 ## 0.8.0 - 2021-03-16
 ### Changed
 - Removing gatekeeper client
