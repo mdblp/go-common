@@ -1,4 +1,4 @@
-module: shoreline
+module: go-common
 type: golang
 runTests: false
 docker: false
