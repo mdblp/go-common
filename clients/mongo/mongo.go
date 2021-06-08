@@ -65,6 +65,9 @@ func newMongoClient(config *Config) (*mongo.Client, error) {
 		return nil, err
 	}
 	clientOptions := options.Client().ApplyURI(connectionString)
+	if config.ReadPreferences != nil {
+		clientOptions.SetReadPreference(config.ReadPreferences)
+	}
 	mongoClient, err := mongo.Connect(context.Background(), clientOptions)
 	if err != nil {
 		return nil, err

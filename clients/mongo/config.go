@@ -9,6 +9,7 @@ import (
 
 	common "github.com/tidepool-org/go-common"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 // Config of the mongo database
@@ -24,6 +25,7 @@ type Config struct {
 	WaitConnectionInterval time.Duration                 `json:"waitConnectionInterval"`
 	MaxConnectionAttempts  int64                         `json:"maxConnectionAttempts"`
 	Indexes                map[string][]mongo.IndexModel `json:"indexes"`
+	ReadPreferences        *readpref.ReadPref
 }
 
 // FromEnv read the mongo config from the environment variables
@@ -50,6 +52,20 @@ func (config *Config) FromEnv() {
 	config.WaitConnectionInterval = time.Duration(waitConnectionInterval) * time.Second
 	config.MaxConnectionAttempts = common.GetEnvironmentInt64("TIDEPOOL_STORE_MAX_CONNECTION_ATTEMPTS", 0)
 	// O is the default value to keep service running when db is not available
+	readModeEnv, found := os.LookupEnv("TIDEPOOL_STORE_READ_MODE")
+	if found {
+		readMode, err := readpref.ModeFromString(readModeEnv)
+		if err == nil && readMode.IsValid() {
+			readOpts := make([]readpref.Option, 0, 1)
+			staleness := common.GetEnvironmentInt64("TIDEPOOL_STORE_MAX_STALENESS", 0)
+			if staleness != 0 {
+				readOpts = append(readOpts, readpref.WithMaxStaleness(time.Duration(staleness) * time.Second))
+			}
+			readPrefs, err := readpref.New(readMode, readOpts...); if err==nil {
+				config.ReadPreferences = readPrefs
+			} 
+		}
+	}
 
 }
 
