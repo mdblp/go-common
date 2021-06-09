@@ -59,14 +59,14 @@ func (config *Config) FromEnv() {
 			readOpts := make([]readpref.Option, 0, 1)
 			staleness := common.GetEnvironmentInt64("TIDEPOOL_STORE_MAX_STALENESS", 0)
 			if staleness != 0 {
-				readOpts = append(readOpts, readpref.WithMaxStaleness(time.Duration(staleness) * time.Second))
+				readOpts = append(readOpts, readpref.WithMaxStaleness(time.Duration(staleness)*time.Second))
 			}
-			readPrefs, err := readpref.New(readMode, readOpts...); if err==nil {
+			readPrefs, err := readpref.New(readMode, readOpts...)
+			if err == nil {
 				config.ReadPreferences = readPrefs
-			} 
+			}
 		}
 	}
-
 }
 
 func (config *Config) toConnectionString() (string, error) {

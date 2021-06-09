@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"sync"
 	"time"
 
@@ -46,7 +47,7 @@ func NewStoreClient(config *Config, logger *log.Logger) (*StoreClient, error) {
 	if config.Timeout <= 0 {
 		return nil, errors.New("timeout is invalid")
 	}
-	mongoClient, err := newMongoClient(config)
+	mongoClient, err := newMongoClient(config, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -59,14 +60,22 @@ func NewStoreClient(config *Config, logger *log.Logger) (*StoreClient, error) {
 
 	return store, nil
 }
-func newMongoClient(config *Config) (*mongo.Client, error) {
+func newMongoClient(config *Config, logger *log.Logger) (*mongo.Client, error) {
 	connectionString, err := config.toConnectionString()
 	if err != nil {
 		return nil, err
 	}
 	clientOptions := options.Client().ApplyURI(connectionString)
 	if config.ReadPreferences != nil {
+		logger.Printf("Mongo client using read preferences: %v.\n", config.ReadPreferences.String())
 		clientOptions.SetReadPreference(config.ReadPreferences)
+	} else {
+		envConfig := "No environment set."
+		readModeEnv, found := os.LookupEnv("TIDEPOOL_STORE_READ_MODE")
+		if found {
+			envConfig = fmt.Sprintf("Environment set to %v", readModeEnv)
+		}
+		logger.Printf("Mongo client using default read preferences: primary. %v\n", envConfig)
 	}
 	mongoClient, err := mongo.Connect(context.Background(), clientOptions)
 	if err != nil {

@@ -148,14 +148,14 @@ func helperTestFromEnv(t *testing.T, testEnvs map[string]string) {
 	if err != nil {
 		expectedTimeout = 2
 	}
-	if cfg.Timeout != time.Duration(expectedTimeout) * time.Second {
+	if cfg.Timeout != time.Duration(expectedTimeout)*time.Second {
 		t.Errorf("cfg.Timeout not matching env.\nExpected %v seconds got %v\n", expectedTimeout, cfg.Timeout)
 	}
 	expectedWaitConnectionInterval, err := strconv.Atoi(testEnvs["TIDEPOOL_STORE_WAIT_CONNECTION_INTERVAL"])
 	if err != nil {
 		expectedWaitConnectionInterval = 5
 	}
-	if cfg.WaitConnectionInterval != time.Duration(expectedWaitConnectionInterval) * time.Second {
+	if cfg.WaitConnectionInterval != time.Duration(expectedWaitConnectionInterval)*time.Second {
 		t.Errorf("cfg.WaitConnectionInterval not matching env.\nExpected %v seconds got %v\n", expectedWaitConnectionInterval, cfg.WaitConnectionInterval)
 	}
 	expectedMaxConnectionAttempts, err := strconv.Atoi(testEnvs["TIDEPOOL_STORE_MAX_CONNECTION_ATTEMPTS"])
@@ -165,7 +165,7 @@ func helperTestFromEnv(t *testing.T, testEnvs map[string]string) {
 	if cfg.MaxConnectionAttempts != int64(expectedMaxConnectionAttempts) {
 		t.Errorf("cfg.MaxConnectionAttempts not matching env.\nExpected %v got %v\n", expectedMaxConnectionAttempts, cfg.MaxConnectionAttempts)
 	}
-	
+
 	if testEnvs["TIDEPOOL_STORE_READ_MODE"] != "" {
 		if cfg.ReadPreferences.Mode().String() != testEnvs["TIDEPOOL_STORE_READ_MODE"] {
 			t.Errorf("cfg.ReadPreferences mode not matching env.\nExpected %v got %v\n", testEnvs["TIDEPOOL_STORE_READ_MODE"], cfg.ReadPreferences.Mode().String())
@@ -179,7 +179,7 @@ func helperTestFromEnv(t *testing.T, testEnvs map[string]string) {
 		if set != expectedSet {
 			t.Errorf("cfg.ReadPreferences MaxStaleness should be set: %v.", expectedSet)
 		}
-		if  set && staleness != time.Duration(expectedStaleness) * time.Second {
+		if set && staleness != time.Duration(expectedStaleness)*time.Second {
 			t.Errorf("cfg.ReadPreferences MaxStaleness not matching env.\nExpected %v seconds got %v\n", expectedStaleness, staleness)
 		}
 	} else {
@@ -187,44 +187,43 @@ func helperTestFromEnv(t *testing.T, testEnvs map[string]string) {
 			t.Errorf("cfg.ReadPreferences should be nil.\nFound %v", cfg.ReadPreferences)
 		}
 	}
-	
+
 }
 
 func TestFromEnv(t *testing.T) {
 	testEnv := map[string]string{
-		"TIDEPOOL_STORE_SCHEME": "http",
-		"TIDEPOOL_STORE_ADDRESSES": "mongo.dblp.fr",
-		"TIDEPOOL_STORE_USERNAME": "diabeloop",
-		"TIDEPOOL_STORE_PASSWORD": "superSafePassword",
-		"TIDEPOOL_STORE_DATABASE": "dbl-data",
-		"TIDEPOOL_STORE_OPT_PARAMS": "&opt1=1&opt2=2",
-		"TIDEPOOL_STORE_TLS": "true",
-		"TIDEPOOL_STORE_DEFAULT_TIMEOUT": "10",
+		"TIDEPOOL_STORE_SCHEME":                   "http",
+		"TIDEPOOL_STORE_ADDRESSES":                "mongo.dblp.fr",
+		"TIDEPOOL_STORE_USERNAME":                 "diabeloop",
+		"TIDEPOOL_STORE_PASSWORD":                 "superSafePassword",
+		"TIDEPOOL_STORE_DATABASE":                 "dbl-data",
+		"TIDEPOOL_STORE_OPT_PARAMS":               "&opt1=1&opt2=2",
+		"TIDEPOOL_STORE_TLS":                      "true",
+		"TIDEPOOL_STORE_DEFAULT_TIMEOUT":          "10",
 		"TIDEPOOL_STORE_WAIT_CONNECTION_INTERVAL": "15",
-		"TIDEPOOL_STORE_MAX_CONNECTION_ATTEMPTS": "20",
-		"TIDEPOOL_STORE_READ_MODE": "secondaryPreferred",
-		"TIDEPOOL_STORE_MAX_STALENESS": "120",
+		"TIDEPOOL_STORE_MAX_CONNECTION_ATTEMPTS":  "20",
+		"TIDEPOOL_STORE_READ_MODE":                "secondaryPreferred",
+		"TIDEPOOL_STORE_MAX_STALENESS":            "120",
 	}
 	helperTestFromEnv(t, testEnv)
 	testEnv = map[string]string{
-		"TIDEPOOL_STORE_SCHEME": "http",
-		"TIDEPOOL_STORE_ADDRESSES": "mongo.dblp.fr",
-		"TIDEPOOL_STORE_USERNAME": "diabeloop",
-		"TIDEPOOL_STORE_PASSWORD": "superSafePassword",
-		"TIDEPOOL_STORE_DATABASE": "dbl-data",
+		"TIDEPOOL_STORE_SCHEME":     "http",
+		"TIDEPOOL_STORE_ADDRESSES":  "mongo.dblp.fr",
+		"TIDEPOOL_STORE_USERNAME":   "diabeloop",
+		"TIDEPOOL_STORE_PASSWORD":   "superSafePassword",
+		"TIDEPOOL_STORE_DATABASE":   "dbl-data",
 		"TIDEPOOL_STORE_OPT_PARAMS": "&opt1=1&opt2=2",
 	}
 	helperTestFromEnv(t, testEnv)
 	testEnv = map[string]string{
-		"TIDEPOOL_STORE_SCHEME": "http",
-		"TIDEPOOL_STORE_ADDRESSES": "mongo.dblp1.fr,mongo.dblp2.fr",
-		"TIDEPOOL_STORE_USERNAME": "diabeloop",
-		"TIDEPOOL_STORE_PASSWORD": "superSafePassword",
-		"TIDEPOOL_STORE_DATABASE": "dbl-data",
+		"TIDEPOOL_STORE_SCHEME":     "http",
+		"TIDEPOOL_STORE_ADDRESSES":  "mongo.dblp1.fr,mongo.dblp2.fr",
+		"TIDEPOOL_STORE_USERNAME":   "diabeloop",
+		"TIDEPOOL_STORE_PASSWORD":   "superSafePassword",
+		"TIDEPOOL_STORE_DATABASE":   "dbl-data",
 		"TIDEPOOL_STORE_OPT_PARAMS": "&opt1=1&opt2=2",
 	}
 	helperTestFromEnv(t, testEnv)
-
 
 }
 
@@ -292,7 +291,7 @@ func TestReConnectionOnStartup(t *testing.T) {
 	}
 	// Expect the connection to be established once server is up
 	store.config.addresses = []string{address}
-	client, err := newMongoClient(store.config)
+	client, err := newMongoClient(store.config, logger)
 	if err != nil {
 		t.Errorf("Error creating mongo.client : %v", err)
 	}
