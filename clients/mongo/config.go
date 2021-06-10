@@ -50,8 +50,12 @@ func (config *Config) FromEnv() {
 	config.Timeout = time.Duration(defaultTimeout) * time.Second
 	waitConnectionInterval := common.GetEnvironmentInt64("TIDEPOOL_STORE_WAIT_CONNECTION_INTERVAL", 5)
 	config.WaitConnectionInterval = time.Duration(waitConnectionInterval) * time.Second
+	// 0 is the default value to keep service running when db is not available
 	config.MaxConnectionAttempts = common.GetEnvironmentInt64("TIDEPOOL_STORE_MAX_CONNECTION_ATTEMPTS", 0)
-	// O is the default value to keep service running when db is not available
+	config.readPrefsFromEnv()
+}
+
+func (config *Config) readPrefsFromEnv() {
 	readModeEnv, found := os.LookupEnv("TIDEPOOL_STORE_READ_MODE")
 	if found {
 		readMode, err := readpref.ModeFromString(readModeEnv)
