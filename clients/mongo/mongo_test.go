@@ -3,6 +3,8 @@ package mongo
 import (
 	"log"
 	"os"
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 )
@@ -100,6 +102,131 @@ func TestOptParams(t *testing.T) {
 	}
 }
 
+func overrideEnvs(overrides map[string]string) map[string]string {
+	current := make(map[string]string, len(overrides))
+	for env := range overrides {
+		orig := os.Getenv(env)
+		os.Setenv(env, overrides[env])
+		current[env] = orig
+	}
+	return current
+}
+func restoreEnvs(origin map[string]string) {
+	for env := range origin {
+		os.Setenv(env, origin[env])
+	}
+}
+
+func helperTestFromEnv(t *testing.T, testEnvs map[string]string) {
+	cfg := Config{}
+	origEnvs := overrideEnvs(testEnvs)
+	cfg.FromEnv()
+	restoreEnvs(origEnvs)
+	if cfg.Scheme != testEnvs["TIDEPOOL_STORE_SCHEME"] {
+		t.Errorf("cfg.Scheme not matching env.\nExpected %v got %v\n", testEnvs["TIDEPOOL_STORE_SCHEME"], cfg.Scheme)
+	}
+	adresses := strings.Split(testEnvs["TIDEPOOL_STORE_ADDRESSES"], ",")
+	if len(adresses) != len(cfg.addresses) || cfg.addresses[0] != adresses[0] {
+		t.Errorf("cfg.addresses not matching env.\nExpected %v got %v\n", adresses, cfg.addresses)
+	}
+	if cfg.Username != testEnvs["TIDEPOOL_STORE_USERNAME"] {
+		t.Errorf("cfg.Username not matching env.\nExpected %v got %v\n", testEnvs["TIDEPOOL_STORE_USERNAME"], cfg.Username)
+	}
+	if cfg.Password != testEnvs["TIDEPOOL_STORE_PASSWORD"] {
+		t.Errorf("cfg.Password not matching env.\nExpected %v got %v\n", testEnvs["TIDEPOOL_STORE_PASSWORD"], cfg.Password)
+	}
+	if cfg.Database != testEnvs["TIDEPOOL_STORE_DATABASE"] {
+		t.Errorf("cfg.Database not matching env.\nExpected %v got %v\n", testEnvs["TIDEPOOL_STORE_DATABASE"], cfg.Database)
+	}
+	if cfg.OptParams != testEnvs["TIDEPOOL_STORE_OPT_PARAMS"] {
+		t.Errorf("cfg.OptParams not matching env.\nExpected %v got %v\n", testEnvs["TIDEPOOL_STORE_OPT_PARAMS"], cfg.OptParams)
+	}
+	if cfg.TLS != (testEnvs["TIDEPOOL_STORE_TLS"] == "true") {
+		t.Errorf("cfg.TLS not matching env.\nExpected %v got %v\n", testEnvs["TIDEPOOL_STORE_TLS"] == "true", cfg.TLS)
+	}
+	expectedTimeout, err := strconv.Atoi(testEnvs["TIDEPOOL_STORE_DEFAULT_TIMEOUT"])
+	if err != nil {
+		expectedTimeout = 2
+	}
+	if cfg.Timeout != time.Duration(expectedTimeout)*time.Second {
+		t.Errorf("cfg.Timeout not matching env.\nExpected %v seconds got %v\n", expectedTimeout, cfg.Timeout)
+	}
+	expectedWaitConnectionInterval, err := strconv.Atoi(testEnvs["TIDEPOOL_STORE_WAIT_CONNECTION_INTERVAL"])
+	if err != nil {
+		expectedWaitConnectionInterval = 5
+	}
+	if cfg.WaitConnectionInterval != time.Duration(expectedWaitConnectionInterval)*time.Second {
+		t.Errorf("cfg.WaitConnectionInterval not matching env.\nExpected %v seconds got %v\n", expectedWaitConnectionInterval, cfg.WaitConnectionInterval)
+	}
+	expectedMaxConnectionAttempts, err := strconv.Atoi(testEnvs["TIDEPOOL_STORE_MAX_CONNECTION_ATTEMPTS"])
+	if err != nil {
+		expectedMaxConnectionAttempts = 0
+	}
+	if cfg.MaxConnectionAttempts != int64(expectedMaxConnectionAttempts) {
+		t.Errorf("cfg.MaxConnectionAttempts not matching env.\nExpected %v got %v\n", expectedMaxConnectionAttempts, cfg.MaxConnectionAttempts)
+	}
+
+	if testEnvs["TIDEPOOL_STORE_READ_MODE"] != "" {
+		if cfg.ReadPreferences.Mode().String() != testEnvs["TIDEPOOL_STORE_READ_MODE"] {
+			t.Errorf("cfg.ReadPreferences mode not matching env.\nExpected %v got %v\n", testEnvs["TIDEPOOL_STORE_READ_MODE"], cfg.ReadPreferences.Mode().String())
+		}
+		expectedStaleness, err := strconv.Atoi(testEnvs["TIDEPOOL_STORE_MAX_STALENESS"])
+		expectedSet := true
+		if err != nil {
+			expectedSet = false
+		}
+		staleness, set := cfg.ReadPreferences.MaxStaleness()
+		if set != expectedSet {
+			t.Errorf("cfg.ReadPreferences MaxStaleness should be set: %v.", expectedSet)
+		}
+		if set && staleness != time.Duration(expectedStaleness)*time.Second {
+			t.Errorf("cfg.ReadPreferences MaxStaleness not matching env.\nExpected %v seconds got %v\n", expectedStaleness, staleness)
+		}
+	} else {
+		if cfg.ReadPreferences != nil {
+			t.Errorf("cfg.ReadPreferences should be nil.\nFound %v", cfg.ReadPreferences)
+		}
+	}
+
+}
+
+func TestFromEnv(t *testing.T) {
+	testEnv := map[string]string{
+		"TIDEPOOL_STORE_SCHEME":                   "http",
+		"TIDEPOOL_STORE_ADDRESSES":                "mongo.dblp.fr",
+		"TIDEPOOL_STORE_USERNAME":                 "diabeloop",
+		"TIDEPOOL_STORE_PASSWORD":                 "superSafePassword",
+		"TIDEPOOL_STORE_DATABASE":                 "dbl-data",
+		"TIDEPOOL_STORE_OPT_PARAMS":               "&opt1=1&opt2=2",
+		"TIDEPOOL_STORE_TLS":                      "true",
+		"TIDEPOOL_STORE_DEFAULT_TIMEOUT":          "10",
+		"TIDEPOOL_STORE_WAIT_CONNECTION_INTERVAL": "15",
+		"TIDEPOOL_STORE_MAX_CONNECTION_ATTEMPTS":  "20",
+		"TIDEPOOL_STORE_READ_MODE":                "secondaryPreferred",
+		"TIDEPOOL_STORE_MAX_STALENESS":            "120",
+	}
+	helperTestFromEnv(t, testEnv)
+	testEnv = map[string]string{
+		"TIDEPOOL_STORE_SCHEME":     "http",
+		"TIDEPOOL_STORE_ADDRESSES":  "mongo.dblp.fr",
+		"TIDEPOOL_STORE_USERNAME":   "diabeloop",
+		"TIDEPOOL_STORE_PASSWORD":   "superSafePassword",
+		"TIDEPOOL_STORE_DATABASE":   "dbl-data",
+		"TIDEPOOL_STORE_OPT_PARAMS": "&opt1=1&opt2=2",
+	}
+	helperTestFromEnv(t, testEnv)
+	testEnv = map[string]string{
+		"TIDEPOOL_STORE_SCHEME":     "http",
+		"TIDEPOOL_STORE_ADDRESSES":  "mongo.dblp1.fr,mongo.dblp2.fr",
+		"TIDEPOOL_STORE_USERNAME":   "diabeloop",
+		"TIDEPOOL_STORE_PASSWORD":   "superSafePassword",
+		"TIDEPOOL_STORE_DATABASE":   "dbl-data",
+		"TIDEPOOL_STORE_OPT_PARAMS": "&opt1=1&opt2=2",
+	}
+	helperTestFromEnv(t, testEnv)
+
+}
+
 func TestConnection(t *testing.T) {
 	config := Config{
 		// ConnectionString:       "mongodb://localhost/",
@@ -164,7 +291,7 @@ func TestReConnectionOnStartup(t *testing.T) {
 	}
 	// Expect the connection to be established once server is up
 	store.config.addresses = []string{address}
-	client, err := newMongoClient(store.config)
+	client, err := newMongoClient(store.config, logger)
 	if err != nil {
 		t.Errorf("Error creating mongo.client : %v", err)
 	}
