@@ -40,6 +40,7 @@ func LoadEnvironmentConfig(envVars []string, obj interface{}) error {
 	return nil
 }
 
+// GetEnvironmentInt64 return the int value from the env, used the default provided if not found
 func GetEnvironmentInt64(envVar string, defaultValue int64) int64 {
 	stringValue, found := os.LookupEnv(envVar)
 	var intValue int64
@@ -51,9 +52,4 @@ func GetEnvironmentInt64(envVar string, defaultValue int64) int64 {
 		intValue = defaultValue
 	}
 	return intValue
-}
-
-type ServiceConfig struct {
-	Addr    string `json:"address"`
-	Service string `json:"service"`
 }

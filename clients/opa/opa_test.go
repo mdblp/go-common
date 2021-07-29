@@ -56,10 +56,10 @@ func TestGetOpaAuth(t *testing.T) {
 	}))
 	defer srvr.Close()
 
-	opaClient := NewOpaClientBuilder().
-		WithHost(srvr.URL).
-		WithRequestingService("test").
-		Build()
+	opaClient, err := NewClient(nil, srvr.URL, "test")
+	if err != nil {
+		t.Fatalf("Failed GetOpaAuth with error[%v]", err)
+	}
 	var opaReq http.Request
 	opaReq.Host = "authorized"
 	opaReq.URL, _ = url.Parse("http://authorized/url2")

@@ -1,4 +1,4 @@
-package clients
+package seagull
 
 import (
 	"encoding/json"
@@ -26,9 +26,6 @@ func (mock *SeagullMock) SetMockNextCollectionCall(key string, expectedResult st
 		result: expectedResult,
 		err:    expectedError,
 	}
-}
-func (mock *SeagullMock) GetPrivatePair(userID, hashName, token string) *PrivatePair {
-	return &PrivatePair{ID: "mock.id.123", Value: "mock value"}
 }
 
 func (mock *SeagullMock) GetCollection(userID, collectionName, token string, v interface{}) error {

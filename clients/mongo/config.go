@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	common "github.com/tidepool-org/go-common"
+	common "github.com/mdblp/go-common"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )

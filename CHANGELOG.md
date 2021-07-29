@@ -2,6 +2,10 @@
 
 Go-Common is the library of common functions for Tidepool's Go-based applications
 
+## Unreleased
+### Engineering
+- Clean-up go-common
+
 ## 0.9.0 - 2021-06-09
 ### Added
 - Adding read preferences as config on mongo client

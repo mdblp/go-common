@@ -12,26 +12,19 @@ import (
 	"path"
 	"strings"
 
-	"github.com/tidepool-org/go-common/clients/status"
+	"github.com/mdblp/go-common/clients/status"
 )
 
-// Client is the interface to opa.
-type Client interface {
+// API is the interface to opa.
+type API interface {
 	GetOpaAuth(req *http.Request) (*Authorization, error)
 }
 
-// ClientStruct used to store infos for this API
-type ClientStruct struct {
-	host              *string
-	httpClient        *http.Client
+// Client used to store infos for this API
+type Client struct {
+	host              string
 	requestingService string
-}
-
-// ClientBuilder same as Client but with a different API
-type ClientBuilder struct {
-	host              *string
 	httpClient        *http.Client
-	requestingService string
 }
 
 // Authorization struct for authz
@@ -73,80 +66,64 @@ const (
 	routeAuth = "/v1/data/backloops/access"
 )
 
-// NewClientFromEnv read the config from the environment variables
-func NewClientFromEnv(httpClient *http.Client) *ClientStruct {
-	builder := NewOpaClientBuilder()
-	host, _ := os.LookupEnv("OPA_HOST")
-	requestingService, _ := os.LookupEnv("SERVICE_NAME")
-	return builder.WithHost(host).
-		WithHTTPClient(httpClient).
-		WithRequestingService(requestingService).
-		Build()
-}
-
-// NewOpaClientBuilder create a new ClientBuilder
-func NewOpaClientBuilder() *ClientBuilder {
-	return &ClientBuilder{}
-}
-
-// WithHost set the host getter
-func (b *ClientBuilder) WithHost(host string) *ClientBuilder {
-	b.host = &host
-	return b
-}
-
-// WithHTTPClient set the HTTP client
-func (b *ClientBuilder) WithHTTPClient(val *http.Client) *ClientBuilder {
-	b.httpClient = val
-	return b
-}
-
-// WithRequestingService set the HTTP client
-func (b *ClientBuilder) WithRequestingService(val string) *ClientBuilder {
-	b.requestingService = val
-	return b
-}
-
-// Build the portal client
-func (b *ClientBuilder) Build() *ClientStruct {
-	if b.host == nil {
-		panic("OpaClient requires a hostGetter to be set")
+// NewClient create a new OPA client with the specified host & service
+func NewClient(httpClient *http.Client, host string, service string) (*Client, error) {
+	if len(host) == 0 {
+		return nil, errors.New("host is empty")
 	}
-
-	if b.httpClient == nil {
-		b.httpClient = http.DefaultClient
-	}
-
-	return &ClientStruct{
-		host:              b.host,
-		httpClient:        b.httpClient,
-		requestingService: b.requestingService,
-	}
-}
-
-func (client *ClientStruct) getHost() (*url.URL, error) {
-	if client.host == nil {
-		return nil, errors.New("No client host defined")
-	}
-	theURL, err := url.Parse(*client.host)
+	_, err := url.Parse(host)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to parse urlString[%s]", *client.host)
+		return nil, errors.New("Invalid host url")
 	}
-	return theURL, nil
+	if len(service) == 0 {
+		return nil, errors.New("Empty service name")
+	}
+
+	client := httpClient
+	if client == nil {
+		client = http.DefaultClient
+	}
+
+	return &Client{
+		host:              host,
+		requestingService: service,
+		httpClient:        client,
+	}, nil
 }
 
-func (client *ClientStruct) formatRequest(req *http.Request) (*HTTPInput, error) {
+// NewClientFromEnv create a new opa client using environnement variables
+//
+// OPA_HOST for the host
+//
+// SERVICE_NAME For the current (requests) service name
+func NewClientFromEnv(httpClient *http.Client) (*Client, error) {
+	host, haveHost := os.LookupEnv("OPA_HOST")
+	if !haveHost {
+		return nil, errors.New("Missing OPA_HOST environnement variable")
+	}
+	service, haveService := os.LookupEnv("SERVICE_NAME")
+	if !haveService {
+		return nil, errors.New("Missing SERVICE_NAME for OPA environnement variable")
+	}
+
+	return NewClient(httpClient, host, service)
+}
+
+func (client *Client) formatRequest(req *http.Request) (*HTTPInput, error) {
+	var err error
 	var opaReq HTTPInput
+	var decodedString string
+
 	url := *req.URL
 	headers := make(map[string]string)
 	for k := range req.Header {
 		headers[strings.ToLower(k)] = req.Header.Get(k)
 	}
-	if decodedString, err := URL.QueryUnescape(url.RawQuery); err != nil {
+	if decodedString, err = URL.QueryUnescape(url.RawQuery); err != nil {
 		return nil, fmt.Errorf("Unable to parse query String [%s]", err)
-	} else {
-		url.RawQuery = decodedString
 	}
+
+	url.RawQuery = decodedString
 	opaReq.Input.Request.Headers = headers
 	opaReq.Input.Request.Method = req.Method
 	opaReq.Input.Request.Protocol = req.Proto
@@ -161,34 +138,40 @@ func (client *ClientStruct) formatRequest(req *http.Request) (*HTTPInput, error)
 // GetOpaAuth Return the patient configuration
 //
 // The token parameter is used to identify the patient.
-func (client *ClientStruct) GetOpaAuth(req *http.Request) (*Authorization, error) {
-	host, err := client.getHost()
+func (client *Client) GetOpaAuth(req *http.Request) (*Authorization, error) {
+	var jsonRequest []byte
+	var err error
+	host, err := url.Parse(client.host)
 	if host == nil || err != nil {
 		return nil, err
 	}
 
 	host.Path = path.Join(host.Path, routeAuth)
 	myRequest, _ := client.formatRequest(req)
-	if jsonRequest, err := json.Marshal(*myRequest); err != nil {
-		return nil, &status.StatusError{status.NewStatusf(http.StatusInternalServerError, "Error formatting request [%s]", err.Error())}
-	} else {
-		req, _ := http.NewRequest("POST", host.String(), bytes.NewBuffer(jsonRequest))
-
-		res, err := client.httpClient.Do(req)
-		if err != nil {
-			return nil, err
+	if jsonRequest, err = json.Marshal(*myRequest); err != nil {
+		return nil, &status.StatusError{
+			Status: status.NewStatusf(http.StatusInternalServerError, "Error formatting request [%s]", err.Error()),
 		}
-		defer res.Body.Close()
-
-		if res.StatusCode != 200 {
-			return nil, fmt.Errorf("Unknown response code[%d] from service[%s]", res.StatusCode, req.URL)
-		}
-
-		var auth Authorization
-		if err = json.NewDecoder(res.Body).Decode(&auth); err != nil {
-			return nil, fmt.Errorf("Error parsing JSON results: %v", err)
-		}
-
-		return &auth, nil
 	}
+	req, err = http.NewRequest("POST", host.String(), bytes.NewBuffer(jsonRequest))
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := client.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		return nil, fmt.Errorf("Unknown response code[%d] from service[%s]", res.StatusCode, req.URL)
+	}
+
+	var auth Authorization
+	if err = json.NewDecoder(res.Body).Decode(&auth); err != nil {
+		return nil, fmt.Errorf("Error parsing JSON results: %v", err)
+	}
+
+	return &auth, nil
 }

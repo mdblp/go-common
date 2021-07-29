@@ -8,25 +8,18 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
-
-	"github.com/tidepool-org/go-common/clients/disc"
 )
 
-// Client is the interface to portal-api.
-type Client interface {
+// API is the interface to portal-api.
+type API interface {
 	GetPatientConfig(token string) (*PatientConfig, error)
 }
 
-// ClientStruct used to store infos for this API
-type ClientStruct struct {
-	hostGetter disc.HostGetter
-	httpClient *http.Client
-}
-
-// ClientBuilder same as Client but with a different API
-type ClientBuilder struct {
-	hostGetter disc.HostGetter
+// Client used to store infos for this API
+type Client struct {
+	host       string
 	httpClient *http.Client
 }
 
@@ -34,54 +27,38 @@ const (
 	routeV2GetPatientConfig = "/organization/v2/patient/params"
 )
 
-// NewPortalClientBuilder create a new ClientBuilder
-func NewPortalClientBuilder() *ClientBuilder {
-	return &ClientBuilder{}
-}
-
-// WithHostGetter set the host getter
-func (b *ClientBuilder) WithHostGetter(val disc.HostGetter) *ClientBuilder {
-	b.hostGetter = val
-	return b
-}
-
-// WithHTTPClient set the HTTP client
-func (b *ClientBuilder) WithHTTPClient(val *http.Client) *ClientBuilder {
-	b.httpClient = val
-	return b
-}
-
-// Build the portal client
-func (b *ClientBuilder) Build() *ClientStruct {
-	if b.hostGetter == nil {
-		panic("PortalClient requires a hostGetter to be set")
+// NewClient create a new portal-api client
+func NewClient(httpClient *http.Client, host string) (*Client, error) {
+	_, err := url.Parse(host)
+	if err != nil {
+		return nil, errors.New("Invalid host url")
 	}
 
-	if b.httpClient == nil {
-		b.httpClient = http.DefaultClient
+	client := httpClient
+	if client == nil {
+		client = http.DefaultClient
 	}
 
-	return &ClientStruct{
-		hostGetter: b.hostGetter,
-		httpClient: b.httpClient,
-	}
+	return &Client{
+		host:       host,
+		httpClient: client,
+	}, nil
 }
 
-func (client *ClientStruct) getHost() (*url.URL, error) {
-	if hostArr := client.hostGetter.HostGet(); len(hostArr) > 0 {
-		cpy := new(url.URL)
-		// TODO allow to use more than one hostname? :
-		*cpy = hostArr[0]
-		return cpy, nil
+// NewClientFromEnv create a new portal-api client using PORTAL_HOST environnement variable
+func NewClientFromEnv(httpClient *http.Client) (*Client, error) {
+	host, haveHost := os.LookupEnv("PORTAL_HOST")
+	if !haveHost || len(host) == 0 {
+		return nil, errors.New("Missing PORTAL_HOST environnement variable")
 	}
-	return nil, errors.New("no known portal-api hosts")
+	return NewClient(httpClient, host)
 }
 
 // GetPatientConfig Return the patient configuration
 //
 // The token parameter is used to identify the patient.
-func (client *ClientStruct) GetPatientConfig(token string) (*PatientConfig, error) {
-	host, err := client.getHost()
+func (client *Client) GetPatientConfig(token string) (*PatientConfig, error) {
+	host, err := url.Parse(client.host)
 	if host == nil || err != nil {
 		return nil, err
 	}

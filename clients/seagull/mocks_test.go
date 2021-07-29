@@ -1,4 +1,4 @@
-package clients
+package seagull
 
 import (
 	"errors"
@@ -33,13 +33,4 @@ func TestSeagullMock_GetCollection(t *testing.T) {
 	if err.Error() != errMsg {
 		t.Errorf("Unexepected error message expected:%v/receieved:%v", errMsg, err.Error())
 	}
-}
-
-func TestSeagullMock_GetPrivatePair(t *testing.T) {
-	sc := NewSeagullMock()
-
-	if pp := sc.GetPrivatePair("123.456", "Stuff", TOKEN_MOCK); pp == nil {
-		t.Error("Should give us mocked private pair")
-	}
-
 }
