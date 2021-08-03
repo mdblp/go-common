@@ -15,13 +15,13 @@ import (
 	"github.com/mdblp/go-common/clients/status"
 )
 
-// API is the interface to opa.
-type API interface {
+// Client is the interface to opa.
+type Client interface {
 	GetOpaAuth(req *http.Request) (*Authorization, error)
 }
 
-// Client used to store infos for this API
-type Client struct {
+// ClientStruct used to store infos for this API
+type ClientStruct struct {
 	host              string
 	requestingService string
 	httpClient        *http.Client
@@ -67,7 +67,7 @@ const (
 )
 
 // NewClient create a new OPA client with the specified host & service
-func NewClient(httpClient *http.Client, host string, service string) (*Client, error) {
+func NewClient(httpClient *http.Client, host string, service string) (*ClientStruct, error) {
 	if len(host) == 0 {
 		return nil, errors.New("host is empty")
 	}
@@ -84,7 +84,7 @@ func NewClient(httpClient *http.Client, host string, service string) (*Client, e
 		client = http.DefaultClient
 	}
 
-	return &Client{
+	return &ClientStruct{
 		host:              host,
 		requestingService: service,
 		httpClient:        client,
@@ -96,7 +96,7 @@ func NewClient(httpClient *http.Client, host string, service string) (*Client, e
 // OPA_HOST for the host
 //
 // SERVICE_NAME For the current (requests) service name
-func NewClientFromEnv(httpClient *http.Client) (*Client, error) {
+func NewClientFromEnv(httpClient *http.Client) (*ClientStruct, error) {
 	host, haveHost := os.LookupEnv("OPA_HOST")
 	if !haveHost {
 		return nil, errors.New("Missing OPA_HOST environnement variable")
@@ -109,7 +109,7 @@ func NewClientFromEnv(httpClient *http.Client) (*Client, error) {
 	return NewClient(httpClient, host, service)
 }
 
-func (client *Client) formatRequest(req *http.Request) (*HTTPInput, error) {
+func (client *ClientStruct) formatRequest(req *http.Request) (*HTTPInput, error) {
 	var err error
 	var opaReq HTTPInput
 	var decodedString string
@@ -138,7 +138,7 @@ func (client *Client) formatRequest(req *http.Request) (*HTTPInput, error) {
 // GetOpaAuth Return the patient configuration
 //
 // The token parameter is used to identify the patient.
-func (client *Client) GetOpaAuth(req *http.Request) (*Authorization, error) {
+func (client *ClientStruct) GetOpaAuth(req *http.Request) (*Authorization, error) {
 	var jsonRequest []byte
 	var err error
 	host, err := url.Parse(client.host)
