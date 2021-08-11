@@ -35,7 +35,7 @@ type (
 func NewClient(httpClient *http.Client, host string) (*Client, error) {
 	_, err := url.Parse(host)
 	if err != nil {
-		return nil, errors.New("Invalid host url")
+		return nil, errors.New("Invalid seagull host url")
 	}
 
 	client := httpClient
@@ -55,14 +55,7 @@ func NewClientFromEnv(httpClient *http.Client) (*Client, error) {
 	if !haveHost || len(host) == 0 {
 		return nil, errors.New("Missing SEAGULL_HOST environnement variable")
 	}
-	_, err := url.Parse(host)
-	if err != nil {
-		return nil, errors.New("Invalid SEAGULL_HOST url")
-	}
-	return &Client{
-		host:       host,
-		httpClient: httpClient,
-	}, nil
+	return NewClient(httpClient, host)
 }
 
 // GetCollection return a seagull collection content
