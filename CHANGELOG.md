@@ -2,7 +2,7 @@
 
 Go-Common is the library of common functions for Tidepool's Go-based applications
 
-## Unreleased
+## 1.0.0 - 2021-08-11
 ### Engineering
 - YLP-923 Remove hakken & highwater code
 
