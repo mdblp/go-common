@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/tidepool-org/go-common/clients/version"
+	"github.com/mdblp/go-common/clients/version"
 )
 
 func TestNewStatus(t *testing.T) {

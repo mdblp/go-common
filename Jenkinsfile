@@ -15,7 +15,7 @@ pipeline {
                 }
             }
         }
-        stage('Build ') {
+        stage('Build') {
             agent {
                 docker {
                     image 'docker.ci.diabeloop.eu/go-build:1.15'
@@ -41,6 +41,7 @@ pipeline {
                 always {
                     sh 'docker stop mongo4gocommon${RUN_ID} && docker network rm gocommon${RUN_ID}'
                     junit 'test-report.xml'
+                    archiveArtifacts artifacts: 'coverage.html', allowEmptyArchive: true
                 }
             }
         }

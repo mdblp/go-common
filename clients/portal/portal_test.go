@@ -5,8 +5,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"github.com/tidepool-org/go-common/clients/disc"
 )
 
 func TestGetPatientConfig(t *testing.T) {
@@ -97,9 +95,10 @@ func TestGetPatientConfig(t *testing.T) {
 	}))
 	defer srvr.Close()
 
-	portalClient := NewPortalClientBuilder().
-		WithHostGetter(disc.NewStaticHostGetterFromString(srvr.URL)).
-		Build()
+	portalClient, err := NewClient(nil, srvr.URL)
+	if err != nil {
+		t.Fatalf("Failed to create portal client")
+	}
 
 	pc, err := portalClient.GetPatientConfig("0")
 	if pc != nil || err == nil {
