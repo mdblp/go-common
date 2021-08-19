@@ -2,6 +2,10 @@
 
 Go-Common is the library of common functions for Tidepool's Go-based applications
 
+## 1.1.0 - 2021-08-19
+### Changed
+- YLP-956: migrate log to lorgus libraries
+
 ## 1.0.0 - 2021-08-11
 ### Engineering
 - YLP-923 Remove hakken & highwater code
