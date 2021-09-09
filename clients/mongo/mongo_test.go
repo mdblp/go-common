@@ -239,7 +239,7 @@ func TestConnection(t *testing.T) {
 		// if mongo connexion information is provided via env var
 		config.FromEnv()
 	}
-	//logger := log.New(os.Stdout, "mongo-test ", log.LstdFlags|log.LUTC|log.Lshortfile)
+
 	logger := log.New()
 	logger.Out = os.Stdout
 
