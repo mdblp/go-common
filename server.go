@@ -2,7 +2,7 @@ package common
 
 import (
 	"crypto/tls"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"net"
 	"net/http"
 	"time"
