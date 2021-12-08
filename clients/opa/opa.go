@@ -17,7 +17,7 @@ import (
 
 // Client is the interface to opa.
 type Client interface {
-	GetOpaAuth(req *http.Request) (*Authorization, error)
+	GetOpaAuth(req *http.Request, data map[string]interface{}) (*Authorization, error)
 }
 
 // ClientStruct used to store infos for this API
