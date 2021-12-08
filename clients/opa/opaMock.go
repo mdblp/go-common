@@ -49,7 +49,7 @@ func (client *MockClient) GetMockedAuth(authorized bool, data map[string]interfa
 }
 
 // GetOpaAuth mock the GetPatientConfig call
-func (client *MockClient) GetOpaAuth(req *http.Request) (*Authorization, error) {
+func (client *MockClient) GetOpaAuth(req *http.Request, data map[string]interface{}) (*Authorization, error) {
 	key := req.Host + req.URL.Path
 	pcc, ok := client.nextOpaAuthCall[key]
 	if !ok {

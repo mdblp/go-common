@@ -23,7 +23,7 @@ func TestMockGetOpaAuth(t *testing.T) {
 	opaReq.Host = "test0"
 	opaReq.URL, err = url.Parse("http://test0/url")
 
-	testAuth, err := mock.GetOpaAuth(&opaReq)
+	testAuth, err := mock.GetOpaAuth(&opaReq, nil)
 	if testAuth == nil || testAuth.Result == nil || testAuth.Result.Authorized != true || err != nil {
 		t.Error("Invalid mock return for request 1")
 		fmt.Printf("%v \n", err)
@@ -34,13 +34,13 @@ func TestMockGetOpaAuth(t *testing.T) {
 		return
 	}
 	opaReq.URL, err = url.Parse("http://test0/url2")
-	testAuth, err = mock.GetOpaAuth(&opaReq)
+	testAuth, err = mock.GetOpaAuth(&opaReq, nil)
 	if testAuth == nil || testAuth.Result == nil || testAuth.Result.Authorized != false || err != nil {
 		t.Error("Invalid mock return for request 2")
 		return
 	}
 	opaReq.URL, err = url.Parse("http://test1/urlError")
-	testAuth, err = mock.GetOpaAuth(&opaReq)
+	testAuth, err = mock.GetOpaAuth(&opaReq, nil)
 	if testAuth != nil || err == nil {
 		t.Error("Invalid mock return for request 3")
 		return
