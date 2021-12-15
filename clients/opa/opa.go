@@ -17,7 +17,7 @@ import (
 
 // Client is the interface to opa.
 type Client interface {
-	GetOpaAuth(req *http.Request) (*Authorization, error)
+	GetOpaAuth(req *http.Request, data map[string]interface{}) (*Authorization, error)
 }
 
 // ClientStruct used to store infos for this API
@@ -59,6 +59,7 @@ type HTTPInput struct {
 			Protocol string            `json:"protocol"`
 			Service  string            `json:"service"`
 		} `json:"request"`
+		Data map[string]interface{} `json:"data,omitempty"`
 	} `json:"input"`
 }
 
@@ -109,7 +110,7 @@ func NewClientFromEnv(httpClient *http.Client) (*ClientStruct, error) {
 	return NewClient(httpClient, host, service)
 }
 
-func (client *ClientStruct) formatRequest(req *http.Request) (*HTTPInput, error) {
+func (client *ClientStruct) formatRequest(req *http.Request, data map[string]interface{}) (*HTTPInput, error) {
 	var err error
 	var opaReq HTTPInput
 	var decodedString string
@@ -132,13 +133,14 @@ func (client *ClientStruct) formatRequest(req *http.Request) (*HTTPInput, error)
 	opaReq.Input.Request.Query = url.RawQuery
 	opaReq.Input.Request.Fragment = url.RawFragment
 	opaReq.Input.Request.Service = client.requestingService
+	opaReq.Input.Data = data
 	return &opaReq, nil
 }
 
 // GetOpaAuth Return the patient configuration
 //
 // The token parameter is used to identify the patient.
-func (client *ClientStruct) GetOpaAuth(req *http.Request) (*Authorization, error) {
+func (client *ClientStruct) GetOpaAuth(req *http.Request, data map[string]interface{}) (*Authorization, error) {
 	var jsonRequest []byte
 	var err error
 	host, err := url.Parse(client.host)
@@ -147,7 +149,7 @@ func (client *ClientStruct) GetOpaAuth(req *http.Request) (*Authorization, error
 	}
 
 	host.Path = path.Join(host.Path, routeAuth)
-	myRequest, _ := client.formatRequest(req)
+	myRequest, _ := client.formatRequest(req, data)
 	if jsonRequest, err = json.Marshal(*myRequest); err != nil {
 		return nil, &status.StatusError{
 			Status: status.NewStatusf(http.StatusInternalServerError, "Error formatting request [%s]", err.Error()),

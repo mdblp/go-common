@@ -63,7 +63,7 @@ func TestGetOpaAuth(t *testing.T) {
 	var opaReq http.Request
 	opaReq.Host = "authorized"
 	opaReq.URL, _ = url.Parse("http://authorized/url2")
-	auth, err := opaClient.GetOpaAuth(&opaReq)
+	auth, err := opaClient.GetOpaAuth(&opaReq, nil)
 	if auth == nil || err != nil {
 		t.Errorf("Failed GetOpaAuth with error[%v]", err)
 		return
@@ -77,7 +77,7 @@ func TestGetOpaAuth(t *testing.T) {
 		return
 	}
 	opaReq.Host = "unauthorized"
-	auth, err = opaClient.GetOpaAuth(&opaReq)
+	auth, err = opaClient.GetOpaAuth(&opaReq, nil)
 	if auth == nil || err != nil {
 		t.Errorf("Failed GetOpaAuth with error[%v]", err)
 		return
@@ -91,7 +91,7 @@ func TestGetOpaAuth(t *testing.T) {
 		return
 	}
 	opaReq.Host = "error"
-	auth, err = opaClient.GetOpaAuth(&opaReq)
+	auth, err = opaClient.GetOpaAuth(&opaReq, nil)
 	if auth != nil || err == nil {
 		t.Errorf("Failed GetOpaAuth expected an error")
 		return

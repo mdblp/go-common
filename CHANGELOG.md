@@ -1,6 +1,9 @@
 # Go-Common
 
 Go-Common is the library of common functions for Tidepool's Go-based applications
+## 1.2.0 - 2021-12-08
+### Changed
+- YLP-1111 OPA client should handle additional data in requests
 
 ## 1.1.0 - 2021-08-19
 ### Changed
