@@ -3,7 +3,7 @@ package auth
 import (
 	"net/http"
 
-	"github.com/tidepool-org/go-common/clients/shoreline"
+	"github.com/mdblp/shoreline/token"
 )
 
 type ClientMock struct {
@@ -22,15 +22,15 @@ func NewMock(token string) *ClientMock {
 	}
 }
 
-func (client *ClientMock) Authenticate(req *http.Request) *shoreline.TokenData {
+func (client *ClientMock) Authenticate(req *http.Request) *token.TokenData {
 	if client.Unauthorized {
 		return nil
 	}
 
 	if sessionToken := req.Header.Get("x-tidepool-session-token"); sessionToken != "" {
-		return &shoreline.TokenData{UserID: client.UserID, IsServer: client.IsServer}
+		return &token.TokenData{UserId: client.UserID, IsServer: client.IsServer}
 	} else if req.Header.Get("authorization") != "" {
-		return &shoreline.TokenData{UserID: client.UserID, IsServer: client.IsServer}
+		return &token.TokenData{UserId: client.UserID, IsServer: client.IsServer}
 	}
 	return nil
 }
