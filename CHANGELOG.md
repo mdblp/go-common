@@ -3,7 +3,6 @@
 Go-Common is the library of common functions for Tidepool's Go-based applications
 
 ## 1.3.0 - 2022-05-12
-### Added
 - YLP-1533 Create a new client to authenticate requests based on tidepool tokens or new bearer token
 
 ## 1.2.0 - 2021-12-08
