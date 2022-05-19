@@ -89,21 +89,23 @@ func (client *Client) Authenticate(req *http.Request) *token.TokenData {
 		//More validations?
 		if err != nil {
 			log.Print("Error decoding tidepool session token")
-			return nil
-		}
-		return &token.TokenData{UserId: tokenData.UserId, IsServer: tokenData.IsServer}
-	} else {
-		var parsedToken *validator.ValidatedClaims
-		if rawToken, err := jwtmiddleware.AuthHeaderTokenExtractor(req); err != nil {
-			log.Print("Error decoding bearer token")
-			return nil
-		} else if t, err := client.tokenValidator.ValidateToken(req.Context(), rawToken); err != nil {
-			log.Print("Error decoding bearer token")
-			return nil
 		} else {
-			parsedToken = t.(*validator.ValidatedClaims)
+			return tokenData
 		}
-		uid := strings.Split(parsedToken.RegisteredClaims.Subject, "|")[1]
-		return &token.TokenData{UserId: uid, IsServer: false}
+
 	}
+	// Defaults to the auth bearer token when the tidepool token is not provided or invalid
+	var parsedToken *validator.ValidatedClaims
+	if rawToken, err := jwtmiddleware.AuthHeaderTokenExtractor(req); err != nil {
+		log.Print("Error decoding bearer token")
+		return nil
+	} else if t, err := client.tokenValidator.ValidateToken(req.Context(), rawToken); err != nil {
+		log.Print("Error decoding bearer token")
+		return nil
+	} else {
+		parsedToken = t.(*validator.ValidatedClaims)
+	}
+	uid := strings.Split(parsedToken.RegisteredClaims.Subject, "|")[1]
+	customClaims := parsedToken.CustomClaims.(CustomClaims)
+	return &token.TokenData{UserId: uid, IsServer: false, Role: customClaims.Roles[0]}
 }

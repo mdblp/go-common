@@ -4,33 +4,22 @@ import (
 	"net/http"
 
 	"github.com/mdblp/shoreline/token"
+	"github.com/stretchr/testify/mock"
 )
 
 type ClientMock struct {
-	ServerToken  string
-	Unauthorized bool
-	UserID       string
-	IsServer     bool
+	mock.Mock
 }
 
-func NewMock(token string) *ClientMock {
-	return &ClientMock{
-		ServerToken:  token,
-		Unauthorized: false,
-		UserID:       "123.456.789",
-		IsServer:     true,
-	}
+func NewMock() *ClientMock {
+	return &ClientMock{}
 }
 
 func (client *ClientMock) Authenticate(req *http.Request) *token.TokenData {
-	if client.Unauthorized {
+	args := client.Called(req)
+	if args.Get(0) == nil {
 		return nil
+	} else {
+		return args.Get(0).(*token.TokenData)
 	}
-
-	if sessionToken := req.Header.Get("x-tidepool-session-token"); sessionToken != "" {
-		return &token.TokenData{UserId: client.UserID, IsServer: client.IsServer}
-	} else if req.Header.Get("authorization") != "" {
-		return &token.TokenData{UserId: client.UserID, IsServer: client.IsServer}
-	}
-	return nil
 }
