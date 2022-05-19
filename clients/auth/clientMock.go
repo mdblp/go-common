@@ -9,11 +9,10 @@ import (
 
 type ClientMock struct {
 	mock.Mock
-	Unauthorized bool
 }
 
-func NewMock(Unauthorized bool) *ClientMock {
-	return &ClientMock{Unauthorized: Unauthorized}
+func NewMock() *ClientMock {
+	return &ClientMock{}
 }
 
 func (client *ClientMock) Authenticate(req *http.Request) *token.TokenData {
