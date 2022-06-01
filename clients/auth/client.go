@@ -46,7 +46,7 @@ func setupAuth0() *validator.Validator {
 	if value, present := os.LookupEnv("AUTH0_AUDIENCE"); present {
 		targetAudience = []string{value}
 	}
-	issuerURL, err := url.Parse("https://" + os.Getenv("AUTH0_DOMAIN") + "/")
+	issuerURL, err := url.Parse(os.Getenv("AUTH0_URL") + "/")
 	if err != nil {
 		log.Fatalf("Failed to parse the issuer url: %v", err)
 	}
