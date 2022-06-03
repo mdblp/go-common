@@ -106,6 +106,6 @@ func (client *Client) Authenticate(req *http.Request) *token.TokenData {
 		parsedToken = t.(*validator.ValidatedClaims)
 	}
 	uid := strings.Split(parsedToken.RegisteredClaims.Subject, "|")[1]
-	customClaims := parsedToken.CustomClaims.(CustomClaims)
-	return &token.TokenData{UserId: uid, IsServer: false, Role: customClaims.Roles[0]}
+	customClaims := parsedToken.CustomClaims.(*CustomClaims)
+	return &token.TokenData{UserId: uid, IsServer: customClaims.IsServer, Role: customClaims.Roles[0]}
 }
