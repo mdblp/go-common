@@ -2,6 +2,10 @@
 
 Go-Common is the library of common functions for Tidepool's Go-based applications
 
+## 1.3.3 - 2022-06-03
+### Fixed
+- Fix casting issue on auth0 custom claims
+
 ## 1.3.2 - 2022-05-31
 ### Engineering
 - Change AUTH0_DOMAIN by AUTH_URL to allow clients to select http vs https
