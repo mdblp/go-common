@@ -1,12 +1,14 @@
 package seagull
 
 import (
+	"bytes"
 	"encoding/json"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 	"net/url"
 	"os"
 	"path"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/mdblp/go-common/clients/status"
 	"github.com/mdblp/go-common/errors"
@@ -22,6 +24,8 @@ type (
 		// token -- a server token or the user token
 		// v - the interface to return the value in
 		GetCollection(userID, collectionName, token string, v interface{}) error
+		// Set arbitrary collection information from metadata
+		SetCollection(userID, collectionName, token string, payload interface{}) error
 	}
 
 	// Client for seagull
@@ -83,6 +87,41 @@ func (client *Client) GetCollection(userID, collectionName, token string, v inte
 			log.Println("Error parsing JSON results", err)
 			return err
 		}
+		return nil
+	case http.StatusNotFound:
+		log.Printf("No [%s] collection found for [%s]", collectionName, userID)
+		return nil
+	default:
+		return &status.StatusError{Status: status.NewStatusf(res.StatusCode, "Unknown response code from service[%s]", req.URL)}
+	}
+}
+
+func (client *Client) SetCollection(userID, collectionName, token string, payload interface{}) error {
+	host, err := url.Parse(client.host)
+	if err != nil {
+		return err
+	}
+	host.Path = path.Join(host.Path, userID, collectionName)
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequest("PUT", host.String(), bytes.NewBuffer(body))
+	if err != nil {
+		return err
+	}
+	req.Header.Add("x-tidepool-session-token", token)
+	req.Header.Set("Content-Type", "application/json")
+
+	res, err := client.httpClient.Do(req)
+	if err != nil {
+		log.Printf("Problem when looking up collection for userID[%s]. %s", userID, err)
+		return err
+	}
+	defer res.Body.Close()
+
+	switch res.StatusCode {
+	case http.StatusOK:
 		return nil
 	case http.StatusNotFound:
 		log.Printf("No [%s] collection found for [%s]", collectionName, userID)
