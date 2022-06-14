@@ -2,6 +2,10 @@
 
 Go-Common is the library of common functions for Tidepool's Go-based applications
 
+## 1.4.0 - 2022-06-03
+### Added
+- Add setCollection method to seagull client
+
 ## 1.3.3 - 2022-06-03
 ### Fixed
 - Fix casting issue on auth0 custom claims

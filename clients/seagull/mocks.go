@@ -40,3 +40,14 @@ func (mock *SeagullMock) GetCollection(userID, collectionName, token string, v i
 	json.Unmarshal([]byte(response.result), &v)
 	return nil
 }
+
+func (mock *SeagullMock) SetCollection(userID, collectionName, token string, payload interface{}) error {
+	response, ok := mock.nextCollectionCall[userID+collectionName]
+	if !ok {
+		return fmt.Errorf("Unknown response code[404] from seagull.setCollection")
+	}
+	if response.err != nil {
+		return response.err
+	}
+	return nil
+}
