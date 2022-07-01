@@ -2,6 +2,8 @@ package auth
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"log"
 	"net/http"
 	"net/url"
@@ -39,6 +41,23 @@ func (c CustomClaims) Validate(ctx context.Context) error {
 	return nil
 }
 
+// WithCustomCa is a Provider Option for our jwks CachingProvider
+// It is used to specify a local CA cert, usefull when using a local OAuth server which use a self-signed cert
+func WithCustomCA(pem string) jwks.ProviderOption {
+	certPool := x509.NewCertPool()
+	certPool.AppendCertsFromPEM([]byte(pem))
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			RootCAs: certPool,
+		},
+	}
+
+	return func(p *jwks.Provider) {
+		p.Client.Transport = tr
+	}
+}
+
 func setupAuth0() *validator.Validator {
 	//target audience is used to verify the token was issued for a specific domain or url.
 	//by default it will be empty but we would (in the future) use this to authorize or deny access to some urls
@@ -51,7 +70,10 @@ func setupAuth0() *validator.Validator {
 		log.Fatalf("Failed to parse the issuer url: %v", err)
 	}
 	keyProvider := jwks.NewCachingProvider(issuerURL, 5*time.Minute)
-
+	// Use a custom CA cert if it's provided
+	if os.Getenv("SSL_CUSTOM_CA_KEY") != "" {
+		keyProvider = jwks.NewCachingProvider(issuerURL, 5*time.Minute, WithCustomCA(os.Getenv("SSL_CUSTOM_CA_KEY")))
+	}
 	jwtValidator, err := validator.New(
 		keyProvider.KeyFunc,
 		validator.RS256,
