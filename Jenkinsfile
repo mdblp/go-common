@@ -1,7 +1,9 @@
 @Library('mdblp-library') _
 def builderImage
 pipeline {
-    agent any
+    agent {
+        label 'blp'
+    }
     stages {
         stage('Initialization') {
             steps {
@@ -19,6 +21,7 @@ pipeline {
             agent {
                 docker {
                     image 'docker.ci.diabeloop.eu/go-build:1.17'
+                    label 'blp'
                 }
             }
             steps {
