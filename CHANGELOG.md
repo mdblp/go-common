@@ -2,6 +2,10 @@
 
 Go-Common is the library of common functions for Tidepool's Go-based applications
 
+## 1.5.0 - 2022-08-23
+### Engineering
+- Add OTP package to this common library
+
 ## 1.4.1 - 2022-06-29
 ### Engineering
 - YLP-1644: possibility to set a custom CA cert for when we run backloops in our dev/test env
