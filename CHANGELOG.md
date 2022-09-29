@@ -5,7 +5,6 @@ Go-Common is the library of common functions for Tidepool's Go-based application
 ## 1.6.0 - 2022-09-27
 ### Engineering
 - Remove seagull client (moved to seagull repo)
-- Add a new error constructor
 
 ## 1.5.0 - 2022-08-23
 ### Engineering
