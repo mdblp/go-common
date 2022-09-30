@@ -2,6 +2,11 @@
 
 Go-Common is the library of common functions for Tidepool's Go-based applications
 
+# 1.7.0 - 2022-09-30
+### Engineering
+- Remove mongoDb lib
+- Add context utils (logging and session handler), moved from go-routers
+
 ## 1.6.0 - 2022-09-27
 ### Engineering
 - Remove seagull client (moved to seagull repo)
