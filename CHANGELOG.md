@@ -2,6 +2,10 @@
 
 Go-Common is the library of common functions for Tidepool's Go-based applications
 
+# 2.0.0 - 2022-10-18
+### Engineering
+- Remove mongoDb lib (breaking change)
+
 # 1.7.0 - 2022-09-30
 ### Engineering
 - Remove mongoDb lib
