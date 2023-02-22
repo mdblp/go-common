@@ -1,6 +1,11 @@
 # Go-Common
 
 Go-Common is the library of common functions for Tidepool's Go-based applications
+
+## 1.7.2 - 2023-02-22
+### Engineering
+- Rework custom error methods
+
 ## 1.7.1 - 2023-02-21
 ### Engineering
 - New error wrapper utility
