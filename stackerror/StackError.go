@@ -41,6 +41,11 @@ func NewWithDetails(message string, details map[string]interface{}) Error {
 	return err
 }
 
+// Wrap returns an error based on an existing error and add stack trace details
+func Wrap(errorToWrap error) error {
+	return New(errorToWrap.Error())
+}
+
 func (err Error) Error() string {
 	detailsString := ""
 	for key, value := range err.details {
