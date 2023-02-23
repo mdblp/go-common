@@ -26,6 +26,7 @@ func New(msg string) Error {
 		sourceFilename: frame.File,
 		sourceFunction: frame.Function,
 		lineNumber:     frame.Line,
+		details:        make(map[string]interface{}),
 	}
 }
 
@@ -41,5 +42,14 @@ func NewWithDetails(message string, details map[string]interface{}) Error {
 }
 
 func (err Error) Error() string {
-	return fmt.Sprintf("[%s:%d %s] : %s", err.sourceFilename, err.lineNumber, err.sourceFunction, err.message)
+	detailsString := ""
+	for key, value := range err.details {
+		detailsString += fmt.Sprintf(" [%s=%v] ", key, value)
+	}
+	return fmt.Sprintf("[%s:%d %s] : %s => %s", err.sourceFilename, err.lineNumber, err.sourceFunction, err.message, detailsString)
+}
+
+func (err Error) AddDetail(key string, value interface{}) Error {
+	err.details[key] = value
+	return err
 }
