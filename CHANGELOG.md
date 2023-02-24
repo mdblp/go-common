@@ -2,9 +2,10 @@
 
 Go-Common is the library of common functions for Tidepool's Go-based applications
 
-## 1.7.2 - 2023-02-22
+## 1.8.0 - 2023-02-24
 ### Engineering
-- Rework custom error methods
+- Deprecate go-common errors package
+- Add a new error type "StackError" which tracks details about the error source.
 
 ## 1.7.1 - 2023-02-21
 ### Engineering
