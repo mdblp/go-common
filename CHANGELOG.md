@@ -2,6 +2,10 @@
 
 Go-Common is the library of common functions for Tidepool's Go-based applications
 
+## UNRELEASED
+### Engineering
+- Fix stackerror wrap
+
 ## 1.8.0 - 2023-02-24
 ### Engineering
 - Deprecate go-common errors package
