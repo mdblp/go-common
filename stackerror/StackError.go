@@ -16,7 +16,7 @@ type StackError struct {
 }
 
 // New creates a new error composed of an error message and the stack trace
-func NewStackError(msg string) StackError {
+func newStackError(msg string) StackError {
 	pc := make([]uintptr, 15)
 	n := runtime.Callers(3, pc)
 	frames := runtime.CallersFrames(pc[:n])
@@ -31,7 +31,7 @@ func NewStackError(msg string) StackError {
 }
 
 func New(msg string) StackError {
-	return NewStackError(msg)
+	return newStackError(msg)
 }
 
 // Newf is like New() but it uses the Printf formatting
@@ -47,7 +47,7 @@ func NewWithDetails(message string, details map[string]interface{}) StackError {
 
 // Wrap returns an error based on an existing error and add stack trace details
 func Wrap(errorToWrap error) error {
-	return NewStackError(errorToWrap.Error())
+	return newStackError(errorToWrap.Error())
 }
 
 func (err StackError) Error() string {
