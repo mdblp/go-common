@@ -15,8 +15,15 @@ func NewLineError(message string) error {
 	pc := make([]uintptr, 15)
 	n := runtime.Callers(4, pc)
 	frames := runtime.CallersFrames(pc[:n])
-	frame, _ := frames.Next()
-	return fmt.Errorf("[%s:%d %s] %s", frame.File, frame.Line, frame.Function, message)
+	framesStr := ""
+	for {
+		frame, more := frames.Next()
+		framesStr += " " + fmt.Sprintf("[%s:%d %s] \n", frame.File, frame.Line, frame.Function)
+		if !more {
+			break
+		}
+	}
+	return fmt.Errorf("%s %s", framesStr, message)
 }
 
 func WrapLineError(err error) error {
