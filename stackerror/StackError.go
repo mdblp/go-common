@@ -2,7 +2,6 @@
 package stackerror
 
 import (
-	"errors"
 	"fmt"
 	"runtime"
 )
@@ -28,80 +27,57 @@ func WrapLineError(err error) error {
 	return fmt.Errorf("[%s:%d %s] %w", frame.File, frame.Line, frame.Function, err)
 }
 
-// Error defines an error with details about the source (function, line number...) and other details
 type StackError struct {
-	message        string                 // error message
-	errType        string                 // error type
-	nextError      error                  // next error in the chain
-	details        map[string]interface{} // optional details
-	sourceFilename string                 // name of the file from where the error was fired
-	sourceFunction string                 // name of the function from where the error was fired
-	lineNumber     int                    // line number where the error was fired
+	error
+	kind    string
+	message string
+	details map[string]interface{}
 }
 
-// New creates a new error composed of an error message and the stack trace
-func newStackError(errType string, msg string, nextError error) StackError {
-	pc := make([]uintptr, 15)
-	n := runtime.Callers(3, pc)
-	frames := runtime.CallersFrames(pc[:n])
-	frame, _ := frames.Next()
+func NewStackError(kind string, msg string) StackError {
 	return StackError{
-		message:        msg,
-		errType:        errType,
-		nextError:      nextError,
-		sourceFilename: frame.File,
-		sourceFunction: frame.Function,
-		lineNumber:     frame.Line,
-		details:        make(map[string]interface{}),
+		kind:    kind,
+		message: msg,
+		error:   NewLineError(msg),
+		details: map[string]interface{}{},
 	}
 }
 
-func New(errType string, msg string) StackError {
-	return newStackError(errType, msg, nil)
-}
-
-// Newf is like New() but it uses the Printf formatting
-func Newf(errType string, message string, args ...interface{}) StackError {
-	return New(errType, fmt.Sprintf(message, args...))
-}
-
-func NewWithDetails(errType string, message string, details map[string]interface{}) StackError {
-	err := New(errType, message)
-	err.details = details
-	return err
-}
-
-// Wrap returns an error based on an existing error and add stack trace details
-func Wrap(errorToWrap error) error {
-	stackErr := newStackError("errorWrap", errorToWrap.Error(), errorToWrap)
-	return fmt.Errorf("error wrapped, %w", stackErr)
-}
-
-func (err StackError) Unwrap() error {
-	return err.nextError
-}
-
-func (err StackError) As(target interface{}) bool {
-	return errors.As(err.nextError, target)
-}
-
-func (err StackError) Error() string {
-	detailsString := ""
-	for key, value := range err.details {
-		detailsString += fmt.Sprintf(" [%s=%v] ", key, value)
+func NewStackErrorf(kind string, message string, args ...interface{}) StackError {
+	formatErr := fmt.Sprintf(message, args)
+	return StackError{
+		kind:    kind,
+		message: formatErr,
+		error:   NewLineError(formatErr),
+		details: map[string]interface{}{},
 	}
-	return fmt.Sprintf("[%s:%d %s] : %s => %s", err.sourceFilename, err.lineNumber, err.sourceFunction, err.message, detailsString)
 }
 
-func (err StackError) AddDetail(key string, value interface{}) StackError {
-	err.details[key] = value
-	return err
+func NewStackErrorWithDetails(kind string, msg string, details map[string]interface{}) StackError {
+	detailsStr := "details : "
+	for key, value := range details {
+		detailsStr += fmt.Sprintf("[key=%s,value=%v]", key, value)
+	}
+	return StackError{
+		kind:    kind,
+		message: msg,
+		error:   NewLineError(detailsStr),
+		details: map[string]interface{}{},
+	}
 }
 
-func (err StackError) Type() string {
-	return err.errType
+func (ce *StackError) Type() string {
+	return ce.kind
 }
 
-func (err StackError) Message() string {
-	return err.message
+func (ce *StackError) Message() string {
+	return ce.message
+}
+
+func (ce *StackError) Unwrap() error {
+	return ce.error
+}
+
+func (ce *StackError) AddDetail(key string, value interface{}) {
+	ce.details[key] = value
 }
