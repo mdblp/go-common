@@ -3,6 +3,7 @@ package stackerror
 
 import (
 	"fmt"
+	"reflect"
 	"runtime"
 )
 
@@ -61,4 +62,12 @@ func (err StackError) Error() string {
 func (err StackError) AddDetail(key string, value interface{}) StackError {
 	err.details[key] = value
 	return err
+}
+
+func (err StackError) Type() string {
+	return reflect.ValueOf(err).Type().String()
+}
+
+func (err StackError) Message() string {
+	return err.message
 }
