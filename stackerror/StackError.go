@@ -34,7 +34,7 @@ type StackError struct {
 	details map[string]interface{}
 }
 
-func NewStackError(kind string, msg string) StackError {
+func New(kind string, msg string) StackError {
 	return StackError{
 		kind:    kind,
 		message: msg,
@@ -43,7 +43,7 @@ func NewStackError(kind string, msg string) StackError {
 	}
 }
 
-func NewStackErrorf(kind string, message string, args ...interface{}) StackError {
+func Newf(kind string, message string, args ...interface{}) StackError {
 	formatErr := fmt.Sprintf(message, args)
 	return StackError{
 		kind:    kind,
@@ -53,7 +53,7 @@ func NewStackErrorf(kind string, message string, args ...interface{}) StackError
 	}
 }
 
-func NewStackErrorWithDetails(kind string, msg string, details map[string]interface{}) StackError {
+func NewWithDetails(kind string, msg string, details map[string]interface{}) StackError {
 	detailsStr := "details : "
 	for key, value := range details {
 		detailsStr += fmt.Sprintf("[key=%s,value=%v]", key, value)
