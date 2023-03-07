@@ -27,15 +27,15 @@ func WrapLineError(err error) error {
 	return fmt.Errorf("[%s:%d %s] %w", frame.File, frame.Line, frame.Function, err)
 }
 
-type StackError struct {
+type PublicError struct {
 	error
 	kind    string
 	message string
 	details map[string]interface{}
 }
 
-func New(kind string, msg string) StackError {
-	return StackError{
+func New(kind string, msg string) PublicError {
+	return PublicError{
 		kind:    kind,
 		message: msg,
 		error:   NewLineError(msg),
@@ -43,9 +43,9 @@ func New(kind string, msg string) StackError {
 	}
 }
 
-func Newf(kind string, message string, args ...interface{}) StackError {
+func Newf(kind string, message string, args ...interface{}) PublicError {
 	formatErr := fmt.Sprintf(message, args)
-	return StackError{
+	return PublicError{
 		kind:    kind,
 		message: formatErr,
 		error:   NewLineError(formatErr),
@@ -53,12 +53,12 @@ func Newf(kind string, message string, args ...interface{}) StackError {
 	}
 }
 
-func NewWithDetails(kind string, msg string, details map[string]interface{}) StackError {
+func NewWithDetails(kind string, msg string, details map[string]interface{}) PublicError {
 	detailsStr := "details : "
 	for key, value := range details {
 		detailsStr += fmt.Sprintf("[key=%s,value=%v]", key, value)
 	}
-	return StackError{
+	return PublicError{
 		kind:    kind,
 		message: msg,
 		error:   NewLineError(detailsStr),
@@ -66,18 +66,53 @@ func NewWithDetails(kind string, msg string, details map[string]interface{}) Sta
 	}
 }
 
-func (ce *StackError) Type() string {
+func (ce *PublicError) Type() string {
 	return ce.kind
 }
 
-func (ce *StackError) Message() string {
+func (ce *PublicError) Message() string {
 	return ce.message
 }
 
-func (ce *StackError) Unwrap() error {
+func (ce *PublicError) Unwrap() error {
 	return ce.error
 }
 
-func (ce *StackError) AddDetail(key string, value interface{}) {
-	ce.details[key] = value
+type PrivateError struct {
+	error
+	message string
+	details map[string]interface{}
+}
+
+func NewPrivate(kind string, msg string) PrivateError {
+	return PrivateError{
+		message: msg,
+		error:   NewLineError(msg),
+		details: map[string]interface{}{},
+	}
+}
+
+func NewPrivatef(message string, args ...interface{}) PrivateError {
+	formatErr := fmt.Sprintf(message, args)
+	return PrivateError{
+		message: formatErr,
+		error:   NewLineError(formatErr),
+		details: map[string]interface{}{},
+	}
+}
+
+func NewPrivateWithDetails(msg string, details map[string]interface{}) PrivateError {
+	detailsStr := "details : "
+	for key, value := range details {
+		detailsStr += fmt.Sprintf("[key=%s,value=%v]", key, value)
+	}
+	return PrivateError{
+		message: msg,
+		error:   NewLineError(detailsStr),
+		details: map[string]interface{}{},
+	}
+}
+
+func (ce *PrivateError) Unwrap() error {
+	return ce.error
 }
