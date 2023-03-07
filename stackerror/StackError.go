@@ -7,6 +7,11 @@ import (
 	"runtime"
 )
 
+type ClientError interface {
+	Type() string
+	Message() string
+}
+
 // Error defines an error with details about the source (function, line number...) and other details
 type StackError struct {
 	message        string                 // error message
