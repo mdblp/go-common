@@ -23,15 +23,7 @@ func NewLineError(message string) error {
 			break
 		}
 	}
-	return fmt.Errorf("%s %s", framesStr, message)
-}
-
-func WrapLineError(err error) error {
-	pc := make([]uintptr, 15)
-	n := runtime.Callers(2, pc)
-	frames := runtime.CallersFrames(pc[:n])
-	frame, _ := frames.Next()
-	return fmt.Errorf("[%s:%d %s] %w", frame.File, frame.Line, frame.Function, err)
+	return fmt.Errorf("%s %s", message, framesStr)
 }
 
 type PublicError struct {
