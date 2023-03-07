@@ -13,7 +13,7 @@ type ClientError interface {
 
 func NewLineError(message string) error {
 	pc := make([]uintptr, 15)
-	n := runtime.Callers(0, pc)
+	n := runtime.Callers(2, pc)
 	frames := runtime.CallersFrames(pc[:n])
 	frame, _ := frames.Next()
 	return fmt.Errorf("[%s:%d %s] %s", frame.File, frame.Line, frame.Function, message)
@@ -21,7 +21,7 @@ func NewLineError(message string) error {
 
 func WrapLineError(err error) error {
 	pc := make([]uintptr, 15)
-	n := runtime.Callers(0, pc)
+	n := runtime.Callers(2, pc)
 	frames := runtime.CallersFrames(pc[:n])
 	frame, _ := frames.Next()
 	return fmt.Errorf("[%s:%d %s] %w", frame.File, frame.Line, frame.Function, err)
