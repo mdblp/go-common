@@ -55,8 +55,8 @@ func NewWithDetails(errType string, message string, details map[string]interface
 }
 
 // Wrap returns an error based on an existing error and add stack trace details
-func Wrap(errType string, errorToWrap error) error {
-	return newStackError(errType, errorToWrap.Error(), errorToWrap)
+func Wrap(errorToWrap error) error {
+	return newStackError("errorWrap", errorToWrap.Error(), errorToWrap)
 }
 
 func (err StackError) Unwrap() error {
