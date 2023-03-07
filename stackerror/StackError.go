@@ -65,15 +65,15 @@ func NewWithDetails(kind string, msg string, details map[string]interface{}) Pub
 	}
 }
 
-func (ce *PublicError) Type() string {
+func (ce PublicError) Type() string {
 	return ce.kind
 }
 
-func (ce *PublicError) Message() string {
+func (ce PublicError) Message() string {
 	return ce.message
 }
 
-func (ce *PublicError) Unwrap() error {
+func (ce PublicError) Unwrap() error {
 	return ce.error
 }
 
@@ -112,6 +112,6 @@ func NewPrivateWithDetails(msg string, details map[string]interface{}) PrivateEr
 	}
 }
 
-func (ce *PrivateError) Unwrap() error {
+func (ce PrivateError) Unwrap() error {
 	return ce.error
 }
