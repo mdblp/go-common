@@ -2,6 +2,7 @@
 package stackerror
 
 import (
+	"errors"
 	"fmt"
 	"runtime"
 )
@@ -61,6 +62,10 @@ func Wrap(errorToWrap error) error {
 
 func (err StackError) Unwrap() error {
 	return err.wrappedError
+}
+
+func (err StackError) As(target interface{}) bool {
+	return errors.As(err.wrappedError, target)
 }
 
 func (err StackError) Error() string {
