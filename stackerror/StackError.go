@@ -12,6 +12,22 @@ type ClientError interface {
 	Message() string
 }
 
+func NewLineError(message string) error {
+	pc := make([]uintptr, 15)
+	n := runtime.Callers(3, pc)
+	frames := runtime.CallersFrames(pc[:n])
+	frame, _ := frames.Next()
+	return fmt.Errorf("[%s:%d %s] %s", frame.File, frame.Line, frame.Function, message)
+}
+
+func WrapLineError(err error) error {
+	pc := make([]uintptr, 15)
+	n := runtime.Callers(3, pc)
+	frames := runtime.CallersFrames(pc[:n])
+	frame, _ := frames.Next()
+	return fmt.Errorf("[%s:%d %s] %w", frame.File, frame.Line, frame.Function, err)
+}
+
 // Error defines an error with details about the source (function, line number...) and other details
 type StackError struct {
 	message        string                 // error message
@@ -57,7 +73,8 @@ func NewWithDetails(errType string, message string, details map[string]interface
 
 // Wrap returns an error based on an existing error and add stack trace details
 func Wrap(errorToWrap error) error {
-	return newStackError("errorWrap", errorToWrap.Error(), errorToWrap)
+	stackErr := newStackError("errorWrap", errorToWrap.Error(), errorToWrap)
+	return fmt.Errorf("error wrapped, %w", stackErr)
 }
 
 func (err StackError) Unwrap() error {
