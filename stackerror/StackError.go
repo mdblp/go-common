@@ -16,7 +16,7 @@ type ClientError interface {
 type StackError struct {
 	message        string                 // error message
 	errType        string                 // error type
-	wrappedError   error                  // error wrapped if present
+	nextError      *StackError            // next error in the chain
 	details        map[string]interface{} // optional details
 	sourceFilename string                 // name of the file from where the error was fired
 	sourceFunction string                 // name of the function from where the error was fired
@@ -24,7 +24,7 @@ type StackError struct {
 }
 
 // New creates a new error composed of an error message and the stack trace
-func newStackError(errType string, msg string, wrappedError error) StackError {
+func newStackError(errType string, msg string, nextError *StackError) StackError {
 	pc := make([]uintptr, 15)
 	n := runtime.Callers(3, pc)
 	frames := runtime.CallersFrames(pc[:n])
@@ -32,7 +32,7 @@ func newStackError(errType string, msg string, wrappedError error) StackError {
 	return StackError{
 		message:        msg,
 		errType:        errType,
-		wrappedError:   wrappedError,
+		nextError:      nextError,
 		sourceFilename: frame.File,
 		sourceFunction: frame.Function,
 		lineNumber:     frame.Line,
@@ -56,16 +56,16 @@ func NewWithDetails(errType string, message string, details map[string]interface
 }
 
 // Wrap returns an error based on an existing error and add stack trace details
-func Wrap(errorToWrap error) error {
-	return newStackError("errorWrap", errorToWrap.Error(), errorToWrap)
+func Wrap(errorToWrap StackError) error {
+	return newStackError("errorWrap", errorToWrap.Error(), &errorToWrap)
 }
 
 func (err StackError) Unwrap() error {
-	return err.wrappedError
+	return err.nextError
 }
 
 func (err StackError) As(target interface{}) bool {
-	return errors.As(err.wrappedError, target)
+	return errors.As(err.nextError, target)
 }
 
 func (err StackError) Error() string {
