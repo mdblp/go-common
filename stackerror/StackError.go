@@ -4,6 +4,7 @@ package stackerror
 import (
 	"fmt"
 	"runtime"
+	"strings"
 )
 
 type ClientError interface {
@@ -11,19 +12,23 @@ type ClientError interface {
 	Message() string
 }
 
-func NewLineError(message string) error {
+func newStackError(message string) error {
 	pc := make([]uintptr, 15)
 	n := runtime.Callers(4, pc)
 	frames := runtime.CallersFrames(pc[:n])
-	framesStr := ""
+	stackTrace := ""
 	for {
 		frame, more := frames.Next()
-		framesStr += " " + fmt.Sprintf("[%s:%d %s] \n", frame.File, frame.Line, frame.Function)
+		if !strings.Contains(frame.File, "gin-gonic") &&
+			!strings.Contains(frame.File, "go-common") &&
+			!strings.Contains(frame.File, "go-router") {
+			stackTrace += fmt.Sprintln("[", frame.File, frame.Line, frame.Function, "]")
+		}
 		if !more {
 			break
 		}
 	}
-	return fmt.Errorf("%s %s", message, framesStr)
+	return fmt.Errorf("%s \n %s", message, stackTrace)
 }
 
 type PublicError struct {
@@ -37,7 +42,7 @@ func New(kind string, msg string) PublicError {
 	return PublicError{
 		kind:    kind,
 		message: msg,
-		error:   NewLineError(msg),
+		error:   newStackError(msg),
 		details: map[string]interface{}{},
 	}
 }
@@ -47,7 +52,7 @@ func Newf(kind string, message string, args ...interface{}) PublicError {
 	return PublicError{
 		kind:    kind,
 		message: formatErr,
-		error:   NewLineError(formatErr),
+		error:   newStackError(formatErr),
 		details: map[string]interface{}{},
 	}
 }
@@ -60,7 +65,7 @@ func NewWithDetails(kind string, msg string, details map[string]interface{}) Pub
 	return PublicError{
 		kind:    kind,
 		message: msg,
-		error:   NewLineError(detailsStr),
+		error:   newStackError(detailsStr),
 		details: map[string]interface{}{},
 	}
 }
@@ -86,7 +91,7 @@ type PrivateError struct {
 func NewPrivate(kind string, msg string) PrivateError {
 	return PrivateError{
 		message: msg,
-		error:   NewLineError(msg),
+		error:   newStackError(msg),
 		details: map[string]interface{}{},
 	}
 }
@@ -95,7 +100,7 @@ func NewPrivatef(message string, args ...interface{}) PrivateError {
 	formatErr := fmt.Sprintf(message, args)
 	return PrivateError{
 		message: formatErr,
-		error:   NewLineError(formatErr),
+		error:   newStackError(formatErr),
 		details: map[string]interface{}{},
 	}
 }
@@ -107,7 +112,7 @@ func NewPrivateWithDetails(msg string, details map[string]interface{}) PrivateEr
 	}
 	return PrivateError{
 		message: msg,
-		error:   NewLineError(detailsStr),
+		error:   newStackError(detailsStr),
 		details: map[string]interface{}{},
 	}
 }
