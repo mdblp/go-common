@@ -35,8 +35,8 @@ func newStackError(message string) error {
 
 type PrivateError struct {
 	error
-	Message string
-	Details map[string]interface{}
+	message string
+	details map[string]interface{}
 }
 
 type PublicError struct {
@@ -46,9 +46,9 @@ type PublicError struct {
 
 func NewPrivate(msg string) PrivateError {
 	return PrivateError{
-		Message: msg,
+		message: msg,
 		error:   newStackError(msg),
-		Details: map[string]interface{}{},
+		details: map[string]interface{}{},
 	}
 }
 
@@ -63,12 +63,20 @@ func NewPrivateWithDetails(msg string, details map[string]interface{}) PrivateEr
 		detailsStr += fmt.Sprintf("[key=%s,value=%v]", key, value)
 	}
 	detailsErr := NewPrivate(msg)
-	detailsErr.Details = details
+	detailsErr.details = details
 	return detailsErr
 }
 
 func (ce PrivateError) Unwrap() error {
 	return ce.error
+}
+
+func (ce PrivateError) Message() string {
+	return ce.message
+}
+
+func (ce PrivateError) Details() map[string]interface{} {
+	return ce.details
 }
 
 func New(kind string, msg string) PublicError {
