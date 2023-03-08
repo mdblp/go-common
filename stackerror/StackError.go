@@ -33,71 +33,49 @@ func newStackError(message string) error {
 	return fmt.Errorf("%s \n %s", message, stackTrace)
 }
 
-type PrivateError struct {
+type StackError struct {
 	error
+	kind    string
 	message string
 	details map[string]interface{}
 }
 
-type PublicError struct {
-	PrivateError
-	kind string
-}
-
-func NewPrivate(msg string) PrivateError {
-	return PrivateError{
+func New(kind string, msg string) StackError {
+	return StackError{
 		message: msg,
 		error:   newStackError(msg),
 		details: map[string]interface{}{},
+		kind:    kind,
 	}
 }
 
-func NewPrivatef(message string, args ...interface{}) PrivateError {
-	formatErr := fmt.Sprintf(message, args...)
-	return NewPrivate(formatErr)
-}
-
-func NewPrivateWithDetails(msg string, details map[string]interface{}) PrivateError {
-	detailsStr := "details : "
-	for key, value := range details {
-		detailsStr += fmt.Sprintf("[key=%s,value=%v]", key, value)
-	}
-	detailsErr := NewPrivate(msg)
-	detailsErr.details = details
-	return detailsErr
-}
-
-func (ce PrivateError) Unwrap() error {
-	return ce.error
-}
-
-func (ce PrivateError) Message() string {
-	return ce.message
-}
-
-func (ce PrivateError) Details() map[string]interface{} {
-	return ce.details
-}
-
-func New(kind string, msg string) PublicError {
-	return PublicError{
-		PrivateError: NewPrivate(msg),
-		kind:         kind,
-	}
-}
-
-func Newf(kind string, message string, args ...interface{}) PublicError {
+func Newf(kind string, message string, args ...interface{}) StackError {
 	formatErr := fmt.Sprintf(message, args...)
 	return New(kind, formatErr)
 }
 
-func NewWithDetails(kind string, msg string, details map[string]interface{}) PublicError {
-	return PublicError{
-		PrivateError: NewPrivateWithDetails(msg, details),
-		kind:         kind,
+func NewWithDetails(kind string, msg string, details map[string]interface{}) StackError {
+	detailsStr := "details : "
+	for key, value := range details {
+		detailsStr += fmt.Sprintf("[key=%s,value=%v]", key, value)
 	}
+	detailsErr := New(kind, msg)
+	detailsErr.details = details
+	return detailsErr
 }
 
-func (ce PublicError) Kind() string {
+func (ce StackError) Unwrap() error {
+	return ce.error
+}
+
+func (ce StackError) Message() string {
+	return ce.message
+}
+
+func (ce StackError) Details() map[string]interface{} {
+	return ce.details
+}
+
+func (ce StackError) Kind() string {
 	return ce.kind
 }
