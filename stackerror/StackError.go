@@ -87,7 +87,7 @@ func New(kind string, msg string) PublicError {
 }
 
 func Newf(kind string, message string, args ...interface{}) PublicError {
-	formatErr := fmt.Sprintf(message, args)
+	formatErr := fmt.Sprintf(message, args...)
 	return New(kind, formatErr)
 }
 
