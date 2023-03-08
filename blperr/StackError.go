@@ -64,18 +64,18 @@ func NewWithDetails(kind string, msg string, details map[string]interface{}) Sta
 	return detailsErr
 }
 
-func (ce StackError) Unwrap() error {
-	return ce.error
+func (se StackError) Unwrap() error {
+	return se.error
 }
 
-func (ce StackError) Message() string {
-	return ce.message
+func (se StackError) Message() string {
+	return se.message
 }
 
-func (ce StackError) Details() map[string]interface{} {
-	return ce.details
+func (se StackError) Details() map[string]interface{} {
+	return se.details
 }
 
-func (ce StackError) Kind() string {
-	return ce.kind
+func (se StackError) Kind() string {
+	return se.kind
 }
