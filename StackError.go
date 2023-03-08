@@ -1,5 +1,5 @@
 // Package stackerror: custom error which carry the stack trace in the error message
-package stackerror
+package common
 
 import (
 	"fmt"
