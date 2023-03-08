@@ -7,8 +7,9 @@ import (
 	"strings"
 )
 
-type ClientError interface {
+type ClientErrorWriter interface {
 	Kind() string
+	Message() string
 }
 
 func newStackError(message string) error {
