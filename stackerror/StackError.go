@@ -53,7 +53,7 @@ func NewPrivate(msg string) PrivateError {
 }
 
 func NewPrivatef(message string, args ...interface{}) PrivateError {
-	formatErr := fmt.Sprintf(message, args)
+	formatErr := fmt.Sprintf(message, args...)
 	return NewPrivate(formatErr)
 }
 
