@@ -1,5 +1,5 @@
 // Package stackerror: custom error which carry the stack trace in the error message
-package common
+package blperr
 
 import (
 	"fmt"
