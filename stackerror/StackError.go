@@ -8,8 +8,7 @@ import (
 )
 
 type ClientError interface {
-	Type() string
-	Message() string
+	Kind() string
 }
 
 func newStackError(message string) error {
@@ -20,6 +19,8 @@ func newStackError(message string) error {
 	for {
 		frame, more := frames.Next()
 		if !strings.Contains(frame.File, "gin-gonic") &&
+			!strings.Contains(frame.File, "gin-contrib") &&
+			!strings.Contains(frame.File, "middleware") &&
 			!strings.Contains(frame.File, "go-common") &&
 			!strings.Contains(frame.File, "go-router") {
 			stackTrace += fmt.Sprintln("[", frame.File, frame.Line, frame.Function, "]")
@@ -31,78 +32,28 @@ func newStackError(message string) error {
 	return fmt.Errorf("%s \n %s", message, stackTrace)
 }
 
-type PublicError struct {
-	error
-	kind    string
-	message string
-	details map[string]interface{}
-}
-
-func New(kind string, msg string) PublicError {
-	return PublicError{
-		kind:    kind,
-		message: msg,
-		error:   newStackError(msg),
-		details: map[string]interface{}{},
-	}
-}
-
-func Newf(kind string, message string, args ...interface{}) PublicError {
-	formatErr := fmt.Sprintf(message, args)
-	return PublicError{
-		kind:    kind,
-		message: formatErr,
-		error:   newStackError(formatErr),
-		details: map[string]interface{}{},
-	}
-}
-
-func NewWithDetails(kind string, msg string, details map[string]interface{}) PublicError {
-	detailsStr := "details : "
-	for key, value := range details {
-		detailsStr += fmt.Sprintf("[key=%s,value=%v]", key, value)
-	}
-	return PublicError{
-		kind:    kind,
-		message: msg,
-		error:   newStackError(detailsStr),
-		details: map[string]interface{}{},
-	}
-}
-
-func (ce PublicError) Type() string {
-	return ce.kind
-}
-
-func (ce PublicError) Message() string {
-	return ce.message
-}
-
-func (ce PublicError) Unwrap() error {
-	return ce.error
-}
-
 type PrivateError struct {
 	error
-	message string
-	details map[string]interface{}
+	Message string
+	Details map[string]interface{}
 }
 
-func NewPrivate(kind string, msg string) PrivateError {
+type PublicError struct {
+	PrivateError
+	kind string
+}
+
+func NewPrivate(msg string) PrivateError {
 	return PrivateError{
-		message: msg,
+		Message: msg,
 		error:   newStackError(msg),
-		details: map[string]interface{}{},
+		Details: map[string]interface{}{},
 	}
 }
 
 func NewPrivatef(message string, args ...interface{}) PrivateError {
 	formatErr := fmt.Sprintf(message, args)
-	return PrivateError{
-		message: formatErr,
-		error:   newStackError(formatErr),
-		details: map[string]interface{}{},
-	}
+	return NewPrivate(formatErr)
 }
 
 func NewPrivateWithDetails(msg string, details map[string]interface{}) PrivateError {
@@ -110,13 +61,34 @@ func NewPrivateWithDetails(msg string, details map[string]interface{}) PrivateEr
 	for key, value := range details {
 		detailsStr += fmt.Sprintf("[key=%s,value=%v]", key, value)
 	}
-	return PrivateError{
-		message: msg,
-		error:   newStackError(detailsStr),
-		details: map[string]interface{}{},
-	}
+	detailsErr := NewPrivate(msg)
+	detailsErr.Details = details
+	return detailsErr
 }
 
 func (ce PrivateError) Unwrap() error {
 	return ce.error
+}
+
+func New(kind string, msg string) PublicError {
+	return PublicError{
+		PrivateError: NewPrivate(msg),
+		kind:         kind,
+	}
+}
+
+func Newf(kind string, message string, args ...interface{}) PublicError {
+	formatErr := fmt.Sprintf(message, args)
+	return New(kind, formatErr)
+}
+
+func NewWithDetails(kind string, msg string, details map[string]interface{}) PublicError {
+	return PublicError{
+		PrivateError: NewPrivateWithDetails(msg, details),
+		kind:         kind,
+	}
+}
+
+func (ce PublicError) Kind() string {
+	return ce.kind
 }
