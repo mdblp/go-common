@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/mdblp/go-common/clients/version"
+	"github.com/mdblp/go-common/v2/clients/version"
 )
 
 // Type status holds the status return from an http request.

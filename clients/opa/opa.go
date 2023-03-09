@@ -12,7 +12,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/mdblp/go-common/clients/status"
+	"github.com/mdblp/go-common/v2/clients/status"
 )
 
 // Client is the interface to opa.

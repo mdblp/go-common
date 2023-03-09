@@ -1,4 +1,4 @@
-module github.com/mdblp/go-common
+module github.com/mdblp/go-common/v2
 
 go 1.17
 
