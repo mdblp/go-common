@@ -55,11 +55,11 @@ func Newf(kind string, message string, args ...interface{}) StackError {
 }
 
 func NewWithDetails(kind string, msg string, details map[string]interface{}) StackError {
-	detailsStr := "details : "
+	detailsStr := " details : "
 	for key, value := range details {
 		detailsStr += fmt.Sprintf("[key=%s,value=%v]", key, value)
 	}
-	detailsErr := New(kind, msg)
+	detailsErr := New(kind, msg+detailsStr)
 	detailsErr.details = details
 	return detailsErr
 }
