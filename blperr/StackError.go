@@ -15,7 +15,7 @@ type ClientErrorWriter interface {
 func newStackError(message string, kind string, details map[string]interface{}) error {
 	/*Building stack trace*/
 	pc := make([]uintptr, 15)
-	n := runtime.Callers(4, pc)
+	n := runtime.Callers(1, pc)
 	frames := runtime.CallersFrames(pc[:n])
 	stackTrace := ""
 	for {
