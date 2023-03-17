@@ -12,9 +12,10 @@ type ClientErrorWriter interface {
 	Message() string
 }
 
-func newStackError(message string) error {
+func newStackError(message string, kind string, details map[string]interface{}) error {
+	/*Building stack trace*/
 	pc := make([]uintptr, 15)
-	n := runtime.Callers(4, pc)
+	n := runtime.Callers(1, pc)
 	frames := runtime.CallersFrames(pc[:n])
 	stackTrace := ""
 	for {
@@ -30,7 +31,14 @@ func newStackError(message string) error {
 			break
 		}
 	}
-	return fmt.Errorf("%s \n %s", message, stackTrace)
+	/*Building details map*/
+	detailsStr := ""
+	if len(details) > 0 {
+		for key, value := range details {
+			detailsStr += fmt.Sprintf("[key=%s,value=%v]", key, value)
+		}
+	}
+	return fmt.Errorf("kind=[%s] message=[%s] details=[%s] stackTrace=[%s]", kind, message, detailsStr, stackTrace)
 }
 
 type StackError struct {
@@ -41,10 +49,11 @@ type StackError struct {
 }
 
 func New(kind string, msg string) StackError {
+	details := map[string]interface{}{}
 	return StackError{
 		message: msg,
-		error:   newStackError(msg),
-		details: map[string]interface{}{},
+		error:   newStackError(msg, kind, details),
+		details: details,
 		kind:    kind,
 	}
 }
@@ -55,13 +64,12 @@ func Newf(kind string, message string, args ...interface{}) StackError {
 }
 
 func NewWithDetails(kind string, msg string, details map[string]interface{}) StackError {
-	detailsStr := "details : "
-	for key, value := range details {
-		detailsStr += fmt.Sprintf("[key=%s,value=%v]", key, value)
+	return StackError{
+		message: msg,
+		error:   newStackError(msg, kind, details),
+		details: details,
+		kind:    kind,
 	}
-	detailsErr := New(kind, msg)
-	detailsErr.details = details
-	return detailsErr
 }
 
 func (se StackError) Unwrap() error {
