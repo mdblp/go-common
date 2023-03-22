@@ -43,8 +43,8 @@ pipeline {
             post {
                 always {
                     sh 'docker stop mongo4gocommon${RUN_ID} && docker network rm gocommon${RUN_ID}'
-                    junit 'test-report.xml'
-                    archiveArtifacts artifacts: 'coverage.html', allowEmptyArchive: true
+                    junit './v1/test-report.xml'
+                    archiveArtifacts artifacts: './v1/coverage.html', allowEmptyArchive: true
                 }
             }
         }
@@ -61,8 +61,8 @@ pipeline {
             post {
                 always {
                     sh 'docker stop mongo4gocommon${RUN_ID} && docker network rm gocommon${RUN_ID}'
-                    junit 'test-report-v2.xml'
-                    archiveArtifacts artifacts: 'coverage-v2.html', allowEmptyArchive: true
+                    junit './v2/test-report-v2.xml'
+                    archiveArtifacts artifacts: './v2/coverage-v2.html', allowEmptyArchive: true
                 }
             }
         }
