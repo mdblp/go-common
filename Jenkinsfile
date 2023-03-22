@@ -43,7 +43,7 @@ pipeline {
             post {
                 always {
                     sh 'docker stop mongo4gocommon${RUN_ID} && docker network rm gocommon${RUN_ID}'
-                    sh 'ls -l'
+                    sh 'ls -l && ls -l v1/'
                     junit 'test-report.xml'
                     archiveArtifacts artifacts: './v1/coverage.html', allowEmptyArchive: true
                 }
