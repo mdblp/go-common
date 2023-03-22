@@ -17,7 +17,7 @@ pipeline {
                 }
             }
         }
-        stage('Build V1') {
+        stage('Build') {
             agent {
                 docker {
                     image 'docker.ci.diabeloop.eu/go-build:1.17'
@@ -26,20 +26,7 @@ pipeline {
             }
             steps {
                 script {
-                    sh "go build -i ./v1..."
-                }
-            }
-        }
-        stage('Build V2') {
-            agent {
-                docker {
-                    image 'docker.ci.diabeloop.eu/go-build:1.17'
-                    label 'blp'
-                }
-            }
-            steps {
-                script {
-                    sh "go build -i ./v2..."
+                    sh "cd ./v1 && go build && cd ../v2 && go build"
                 }
             }
         }
