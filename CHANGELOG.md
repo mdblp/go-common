@@ -2,7 +2,7 @@
 
 Go-Common is the library of common functions for Tidepool's Go-based applications
 
-## 2.0.0-rc3 - 2023-03-08
+## 2.0.0-rc4 - 2023-03-08
 ### Changed
 - New error with stack trace printing
 
