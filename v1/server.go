@@ -1,11 +1,12 @@
-package common
+package v1
 
 import (
 	"crypto/tls"
-	log "github.com/sirupsen/logrus"
 	"net"
 	"net/http"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Server struct {
