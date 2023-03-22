@@ -36,7 +36,7 @@ pipeline {
                 sh 'docker network create gocommon${RUN_ID} && docker run --rm -d --net=gocommon${RUN_ID} --name=mongo4gocommon${RUN_ID} mongo:4.2'
                 script {
                     docker.image('docker.ci.diabeloop.eu/go-build:1.17').inside("--net=gocommon${RUN_ID}") {
-                        sh "TIDEPOOL_STORE_ADDRESSES=mongo4gocommon${RUN_ID}:27017  TIDEPOOL_STORE_DATABASE=gocommon_test cd $WORKSPACE/v2 && ./test.sh"
+                        sh "TIDEPOOL_STORE_ADDRESSES=mongo4gocommon${RUN_ID}:27017  TIDEPOOL_STORE_DATABASE=gocommon_test cd $WORKSPACE/v1 && ./test.sh"
                     }
                 }
             }
