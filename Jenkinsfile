@@ -49,7 +49,7 @@ pipeline {
             }
         }
         stage('Publish') {
-            when { branch "master" }
+            when { branch "main" }
             steps {
                 publish()
             }
