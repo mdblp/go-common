@@ -2,7 +2,7 @@ os: linux
 dist: focal
 language: go
 go:
- - 1.15.x
+ - 1.22.x
 
 env:
   # Using Go module (go 1.12 need this variable to be set to enable modules)

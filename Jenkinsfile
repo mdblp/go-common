@@ -20,7 +20,7 @@ pipeline {
         stage('Build') {
             agent {
                 docker {
-                    image 'docker.ci.diabeloop.eu/go-build:1.17'
+                    image 'docker.ci.diabeloop.eu/go-build:1.22'
                     label 'blp'
                 }
             }
