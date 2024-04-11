@@ -2,6 +2,10 @@
 
 Go-Common is the library of common functions for Tidepool's Go-based applications
 
+## 2.1.0 - 2024-04-11
+### Engineering
+- Bump go to 1.22
+
 ## 2.0.1 - 2023-05-31
 ### Fixed
 - incorrect version number when creating package
