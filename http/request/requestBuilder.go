@@ -1,4 +1,4 @@
-package utils
+package request
 
 import (
 	"bytes"
@@ -32,7 +32,7 @@ type RequestBuilder struct {
 	payload      interface{}
 }
 
-func defaultBuilder(host string) *RequestBuilder {
+func NewBuilder(host string, method string) *RequestBuilder {
 	defaultUrl, _ := url.Parse("http://go.nowhere")
 	if host == "" {
 		return &RequestBuilder{
@@ -47,53 +47,55 @@ func defaultBuilder(host string) *RequestBuilder {
 			buildError:   true,
 			errorMessage: fmt.Sprintf("Unable to parse urlString [%s]", host)}
 	}
-	return &RequestBuilder{baseUrl: baseUrl, buildError: false, method: http.MethodGet}
+	return &RequestBuilder{baseUrl: baseUrl, buildError: false, method: method}
 }
 
-func NewGetRequest(host string) *RequestBuilder {
-	return defaultBuilder(host)
-}
-
-func NewPostRequest(host string) *RequestBuilder {
-	builder := defaultBuilder(host)
-	builder.method = http.MethodPost
+// NewGetBuilder initialize a request builder for a 'GET' request
+func NewGetBuilder(host string) *RequestBuilder {
+	builder := NewBuilder(host, http.MethodGet)
 	return builder
 }
 
-func NewPutRequest(host string) *RequestBuilder {
-	builder := defaultBuilder(host)
-	builder.method = http.MethodPut
+// NewPostBuilder initialize a request builder for a 'POST' request
+func NewPostBuilder(host string) *RequestBuilder {
+	builder := NewBuilder(host, http.MethodPost)
 	return builder
 }
 
-func NewDeleteRequest(host string) *RequestBuilder {
-	builder := defaultBuilder(host)
-	builder.method = http.MethodDelete
+// NewPutBuilder initialize a request builder for a 'PUT' request
+func NewPutBuilder(host string) *RequestBuilder {
+	builder := NewBuilder(host, http.MethodPut)
 	return builder
 }
 
-func NewCustomRequest(host string, method string) *RequestBuilder {
-	builder := defaultBuilder(host)
-	builder.method = method
+// NewDeleteBuilder initialize a request builder for a 'DELETE' request
+func NewDeleteBuilder(host string) *RequestBuilder {
+	builder := NewBuilder(host, http.MethodDelete)
 	return builder
 }
 
+// WithPath sets the path of the request url.
+// For example: WithPath("abc", "456") will generate a url like http://host/abc/456
 func (b *RequestBuilder) WithPath(pathParams ...string) *RequestBuilder {
 	pathFragments := append([]string{b.baseUrl.Path}, pathParams...)
 	b.baseUrl.Path = path.Join(pathFragments...)
 	return b
 }
 
+// WithPayload add an object which will be serialized and add in the request
 func (b *RequestBuilder) WithPayload(payload interface{}) *RequestBuilder {
 	b.payload = payload
 	return b
 }
 
+// WithAuthToken add an authentication token in the request
 func (b *RequestBuilder) WithAuthToken(token string) *RequestBuilder {
 	b.token = token
 	return b
 }
 
+// WithQueryParams allows you to add multiple query params (in the form of key/value pairs) in the request
+// For example: WithQueryParams(map[string]string{"key1": "val1", "key2": "val2"}) will generate a url like http://host?key1=val1&key2=val2
 func (b *RequestBuilder) WithQueryParams(queryParams map[string]string) *RequestBuilder {
 	q := b.baseUrl.Query()
 	for key, value := range queryParams {
@@ -105,6 +107,9 @@ func (b *RequestBuilder) WithQueryParams(queryParams map[string]string) *Request
 	return b
 }
 
+// WithQueryParamArray allows you to add an array as an url query param in the request
+// For example: WithQueryParamArray("colors", []string{"red", "green"}) will generate a url like http://host?colors=red&colors=green
+// There is no http standard to pass arrays as query params, but this is a common convention and this how Gin (our preferred http server engine) understand it.
 func (b *RequestBuilder) WithQueryParamArray(tableName string, values []string) *RequestBuilder {
 	q := b.baseUrl.Query()
 	for _, value := range values {
@@ -116,6 +121,7 @@ func (b *RequestBuilder) WithQueryParamArray(tableName string, values []string) 
 	return b
 }
 
+// Build instantiates the http.request based on the parameters provided to the builder previously
 func (b *RequestBuilder) Build(ctx context.Context) (*http.Request, error) {
 	var err error
 	if b.buildError {

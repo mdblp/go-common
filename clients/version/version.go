@@ -1,3 +1,5 @@
+// Deprecated: use package go-common/v2/version instead
+// Package version provide utils methods to parse a software version
 package version
 
 import (
@@ -57,7 +59,7 @@ var (
 )
 
 func GetVersion() version {
-        //Ensure this is called once so version instance is created as a singleton
+	//Ensure this is called once so version instance is created as a singleton
 	once.Do(func() {
 		instance = version{base: ReleaseNumber, fullCommit: FullCommit, shortCommit: ShortCommit}
 	})

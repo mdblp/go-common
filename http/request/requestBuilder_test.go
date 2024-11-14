@@ -1,4 +1,4 @@
-package utils
+package request
 
 import (
 	"context"
@@ -16,17 +16,17 @@ const invalidHost = ":thisIsnotAUrl"
 
 func TestDefaultRequestBuilder(t *testing.T) {
 	t.Run("Building a request with an empty url should log an error", func(t *testing.T) {
-		requestBuilder := defaultBuilder("")
+		requestBuilder := NewBuilder("", http.MethodGet)
 		assert.Equal(t, "No client host defined", requestBuilder.errorMessage)
 		assert.Equal(t, true, requestBuilder.buildError)
 	})
 	t.Run("Building a request with a malformed url should log an error", func(t *testing.T) {
-		requestBuilder := defaultBuilder(invalidHost)
+		requestBuilder := NewBuilder(invalidHost, http.MethodGet)
 		assert.Equal(t, "Unable to parse urlString [:thisIsnotAUrl]", requestBuilder.errorMessage)
 		assert.Equal(t, true, requestBuilder.buildError)
 	})
 	t.Run("Building a request with a valid url should create a builder for a GET request", func(t *testing.T) {
-		requestBuilder := defaultBuilder(validHost)
+		requestBuilder := NewBuilder(validHost, http.MethodGet)
 		assert.Equal(t, http.MethodGet, requestBuilder.method)
 		assert.Equal(t, &url.URL{Scheme: "http", Host: "ici.ou.labas.org"}, requestBuilder.baseUrl)
 		assert.Equal(t, false, requestBuilder.buildError)
@@ -34,43 +34,43 @@ func TestDefaultRequestBuilder(t *testing.T) {
 }
 
 func TestNewCustomRequest(t *testing.T) {
-	requestBuilder := NewCustomRequest(validHost, http.MethodHead)
+	requestBuilder := NewBuilder(validHost, http.MethodHead)
 	assert.Equal(t, false, requestBuilder.buildError)
 	assert.Equal(t, http.MethodHead, requestBuilder.method)
 }
 
 func TestNewDeleteRequest(t *testing.T) {
-	requestBuilder := NewDeleteRequest(validHost)
+	requestBuilder := NewDeleteBuilder(validHost)
 	assert.Equal(t, false, requestBuilder.buildError)
 	assert.Equal(t, http.MethodDelete, requestBuilder.method)
 }
 
 func TestNewGetRequest(t *testing.T) {
-	requestBuilder := NewGetRequest(validHost)
+	requestBuilder := NewGetBuilder(validHost)
 	assert.Equal(t, false, requestBuilder.buildError)
 	assert.Equal(t, http.MethodGet, requestBuilder.method)
 }
 
 func TestNewPostRequest(t *testing.T) {
-	requestBuilder := NewPostRequest(validHost)
+	requestBuilder := NewPostBuilder(validHost)
 	assert.Equal(t, false, requestBuilder.buildError)
 	assert.Equal(t, http.MethodPost, requestBuilder.method)
 }
 
 func TestNewPutRequest(t *testing.T) {
-	requestBuilder := NewPutRequest(validHost)
+	requestBuilder := NewPutBuilder(validHost)
 	assert.Equal(t, false, requestBuilder.buildError)
 	assert.Equal(t, http.MethodPut, requestBuilder.method)
 }
 
 func TestBuildError(t *testing.T) {
-	_, err := defaultBuilder("").Build(context.TODO())
+	_, err := NewBuilder("", http.MethodGet).Build(context.TODO())
 	expectedError := RequestBuilderError("No client host defined")
 	assert.Equal(t, expectedError, err)
 }
 
 func TestDefaultGetRequest(t *testing.T) {
-	request, err := NewGetRequest(validHost).Build(context.TODO())
+	request, err := NewGetBuilder(validHost).Build(context.TODO())
 	assert.Equal(t, nil, err)
 	assert.Equal(t, http.MethodGet, request.Method)
 	assert.Equal(t, &url.URL{Scheme: "http", Host: "ici.ou.labas.org", Path: ""}, request.URL)
@@ -80,7 +80,7 @@ func TestDefaultGetRequest(t *testing.T) {
 
 func TestRequestBuilderWithTraceSessionId(t *testing.T) {
 	ctx := dblcontext.SetTraceSessionId(context.TODO(), "ThisIsSessionId")
-	request, err := NewGetRequest(validHost).Build(ctx)
+	request, err := NewGetBuilder(validHost).Build(ctx)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, http.MethodGet, request.Method)
 	assert.Equal(t, &url.URL{Scheme: "http", Host: "ici.ou.labas.org", Path: ""}, request.URL)
@@ -91,7 +91,7 @@ func TestRequestBuilderWithTraceSessionId(t *testing.T) {
 
 func TestRequestBuilder_BuildWithAuthToken(t *testing.T) {
 	t.Run("Building a request with a bearer token", func(t *testing.T) {
-		request, err := NewGetRequest(validHost).WithAuthToken("thisIsAGreatBearerToken").Build(context.TODO())
+		request, err := NewGetBuilder(validHost).WithAuthToken("thisIsAGreatBearerToken").Build(context.TODO())
 		assert.Equal(t, nil, err)
 		assert.Equal(t, http.MethodGet, request.Method)
 		assert.Equal(t, &url.URL{Scheme: "http", Host: "ici.ou.labas.org"}, request.URL)
@@ -100,7 +100,7 @@ func TestRequestBuilder_BuildWithAuthToken(t *testing.T) {
 	})
 	t.Run("Building a request with a tidepool token", func(t *testing.T) {
 		token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9-ddskln546hfgr34"
-		request, err := NewGetRequest(validHost).WithAuthToken(token).Build(context.TODO())
+		request, err := NewGetBuilder(validHost).WithAuthToken(token).Build(context.TODO())
 		assert.Equal(t, nil, err)
 		assert.Equal(t, http.MethodGet, request.Method)
 		assert.Equal(t, &url.URL{Scheme: "http", Host: "ici.ou.labas.org"}, request.URL)
@@ -110,14 +110,14 @@ func TestRequestBuilder_BuildWithAuthToken(t *testing.T) {
 }
 
 func TestRequestBuilder_BuildWithPath(t *testing.T) {
-	request, err := NewGetRequest(validHost).WithPath("user", "123456789").Build(context.TODO())
+	request, err := NewGetBuilder(validHost).WithPath("user", "123456789").Build(context.TODO())
 	assert.Equal(t, nil, err)
 	assert.Equal(t, http.MethodGet, request.Method)
 	assert.Equal(t, &url.URL{Scheme: "http", Host: "ici.ou.labas.org", Path: "/user/123456789"}, request.URL)
 }
 
 func TestRequestBuilder_BuildWithQueryParamArray(t *testing.T) {
-	request, err := NewGetRequest(validHost).
+	request, err := NewGetBuilder(validHost).
 		WithQueryParamArray("tableName", []string{"toto", "titi"}).
 		Build(context.TODO())
 	assert.Equal(t, nil, err)
@@ -126,7 +126,7 @@ func TestRequestBuilder_BuildWithQueryParamArray(t *testing.T) {
 }
 
 func TestRequestBuilder_BuildWithQueryParams(t *testing.T) {
-	request, err := NewGetRequest(validHost).
+	request, err := NewGetBuilder(validHost).
 		WithQueryParams(map[string]string{"key1": "toto", "key2": "titi"}).
 		Build(context.TODO())
 	assert.Equal(t, nil, err)
@@ -167,7 +167,7 @@ func TestRequestEnd2End(t *testing.T) {
 	defer server.Close()
 	ctx := dblcontext.SetTraceSessionId(context.TODO(), "123456789456")
 
-	request, err := NewPutRequest(server.URL).
+	request, err := NewPutBuilder(server.URL).
 		WithAuthToken(token).
 		WithPath("metadata", "1234", "profile").
 		WithPayload(payload).
