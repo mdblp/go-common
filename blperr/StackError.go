@@ -1,4 +1,4 @@
-// Package stackerror: custom error which carry the stack trace in the error message
+// Package blperr: custom error which carry the stack trace in the error message
 package blperr
 
 import (
