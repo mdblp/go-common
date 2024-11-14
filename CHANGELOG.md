@@ -4,7 +4,13 @@ Go-Common is the library of common functions for Tidepool's Go-based application
 
 ## 2.1.0 - 2024-11-12
 ### Added
-- Util lib to build http requests (requestBuilder)
+- Creation of a util library to build http requests (requestBuilder)
+
+### Changed
+- Deprecate/Replace some methods in the context package (session handling related)
+
+### Removed
+- Portal api client (no longer used)
 
 ## 2.0.1 - 2023-05-31
 ### Fixed
