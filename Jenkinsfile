@@ -26,7 +26,7 @@ pipeline {
             }
             steps {
                 script {
-                    sh "go build -i ./..."
+                    sh "go build ./..."
                 }
             }
         }
