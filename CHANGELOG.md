@@ -2,6 +2,10 @@
 
 Go-Common is the library of common functions for Tidepool's Go-based applications
 
+## 2.2.0 - 2025-09-19
+### Changed
+- Copy package version from client to the root of  the repo (and mark the old one as deprecated)
+
 ## 2.1.0 - 2024-11-12
 ### Added
 - Creation of a util library to build http requests (requestBuilder)

@@ -3,12 +3,14 @@ package request
 import (
 	"context"
 	"encoding/json"
-	dblcontext "github.com/mdblp/go-common/v2/context"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	dblcontext "github.com/mdblp/go-common/v2/context"
 )
 
 const validHost = "http://ici.ou.labas.org"

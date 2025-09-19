@@ -5,12 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/mdblp/go-common/v2/blperr"
-	dblcontext "github.com/mdblp/go-common/v2/context"
 	"net/http"
 	"net/url"
 	"path"
 	"strings"
+
+	"github.com/mdblp/go-common/v2/blperr"
+	dblcontext "github.com/mdblp/go-common/v2/context"
 )
 
 const traceSessionHeader = "x-tidepool-trace-session"
